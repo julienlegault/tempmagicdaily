@@ -138,11 +138,11 @@ function renderState() {
   } else {
   const above = guesses
     .filter(g => g.index < answerIndex())
-    .sort((a, b) => b.index - a.index); // closest above first
+    .sort((a, b) => a.index - b.index); // closest above first
 
   const below = guesses
     .filter(g => g.index > answerIndex())
-    .sort((a, b) => a.index - b.index); // closest below first
+    .sort((a, b) => b.index - a.index); // closest below first
 
   // draw closest above (bar 3)
   if (above.length > 0) {
