@@ -13,6 +13,8 @@ const bars: HTMLElement[] = Array.from(
 let cards: string[] = [];
 let guesses: Guess[] = [];
 let wheelOffset = 0;
+const wheelInner = document.querySelector(".wheel-inner");
+const BAR_HEIGHT = 48; // whatever one bar's height is
 
 /* ---------- seeded RNG ---------- */
 function seededRandom(seed: number) {
@@ -226,11 +228,13 @@ function renderState() {
   bars.forEach(bar => {
     bar.style.backgroundColor = "";
   });
+  
+  const last = guesses[guesses.length - 1];
+  const diff = last ? last.index - answerIndex() : 0;
+
+  wheelInner.style.transform = `translateY(${-diff * BAR_HEIGHT}px)`;
 
   const center = bars[5];
-
-  const last = guesses[guesses.length - 1];
-  const diff = last.index - answerIndex();
 
   if (diff === 0) {
     center.textContent = `${last.name} (${guesses.length} guesses)`;
@@ -287,4 +291,15 @@ function renderState() {
     lastBar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 }
+  bars.forEach((bar, i) => {
+  const dist = Math.abs(i - 5); // 5 = center bar
+  const scale = 1 - dist * 0.08;
+  const opacity = 1 - dist * 0.15;
+
+  bar.style.transform = `
+    translateY(${(i - 5) * BAR_HEIGHT}px)
+    scale(${Math.max(scale, 0.6)})
+  `;
+  bar.style.opacity = Math.max(opacity, 0);
+});
 }
