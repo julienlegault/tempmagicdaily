@@ -133,7 +133,7 @@ function renderState() {
   }
   if (guesses.length = 1) {
     const drawBar = bars[diff>0?3:6];
-    drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "v" : "^"}`;
+    drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
     drawBar.classList.add("guess");
   } else {
   const above = guesses
@@ -149,7 +149,7 @@ function renderState() {
     const g = above[0];
     const diff = answerIndex() - g.index;
     const bar = bars[3];
-    bar.textContent = `${g.name} | ${diff} ^`;
+    bar.textContent = `${g.name} | ${diff} v`;
     bar.classList.add("guess");
   }
 
@@ -158,7 +158,7 @@ function renderState() {
     const g = below[0];
     const diff = g.index - answerIndex();
     const bar = bars[6];
-    bar.textContent = `${g.name} | ${diff} v`;
+    bar.textContent = `${g.name} | ${diff} ^`;
     bar.classList.add("guess");
   }
 
