@@ -32,7 +32,7 @@ function getDailyIndex(max: number) {
 
 function guessColor(diff: number): string {
   // diff = absolute distance from answer
-  const MAX = 500; // distance where color is fully "far"
+  const MAX = 15000; // distance where color is fully "far"
   const d = Math.min(diff, MAX) / MAX;
 
   // interpolate red → yellow → green
