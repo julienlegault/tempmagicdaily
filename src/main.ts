@@ -194,6 +194,7 @@ function makeGuess(cardName: string) {
 
   //spinWheel(diff);
   //settleWheel();
+  renderState();
 }
 
 button.onclick = () => {
