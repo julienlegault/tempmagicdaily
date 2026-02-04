@@ -239,7 +239,7 @@ function renderState() {
   }
   if (guesses.length == 1) {
     const drawBar = bars[diff>0?6:3];
-    drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
+    drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "↑" : "↓"}`;
     drawBar.style.backgroundColor = guessColor(Math.abs(diff));
   } else {
   const above = guesses
@@ -283,7 +283,7 @@ function renderState() {
 
   if (Math.abs(last.index - answerIndex()) > 5 && last != above[0] && last != below[0]) {
     const lastBar = bars[diff>0?9:0];
-    lastBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
+    lastBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "↑" : "↓"}`;
     lastBar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 }
