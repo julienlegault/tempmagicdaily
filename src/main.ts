@@ -132,7 +132,7 @@ function renderState() {
     return;
   }
   if (guesses.length == 1) {
-    const drawBar = bars[diff>0?3:6];
+    const drawBar = bars[diff>0?6:3];
     drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
     drawBar.classList.add("guess");
   } else {
@@ -174,4 +174,9 @@ function renderState() {
     }
   });
   }
+
+  if (last.index - answerIndex > 5 && last != above[0] && last != below[0]) {
+    const lastBar = bars[diff>0?9:0];
+    lastBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
+    lastBar.classList.add("guess");
 }
