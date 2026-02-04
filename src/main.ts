@@ -168,7 +168,7 @@ function renderState() {
     if (Math.abs(diff) <= 5 && diff !== 0) {
       const barIndex = 5 + diff;
       if (bars[barIndex]) {
-        bars[barIndex].textContent = `${g.name}`;
+        bars[barIndex].textContent = `${g.name} | ${diff}`;
         bars[barIndex].classList.add("guess");
       }
     }
