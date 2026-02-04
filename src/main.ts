@@ -9,12 +9,11 @@ const autocomplete = document.getElementById("autocomplete")!;
 const bars: HTMLElement[] = Array.from(
   document.querySelectorAll(".bar")
 );
+const answerBar = bars[5];
+bars.splice(5, 1);
 
 let cards: string[] = [];
 let guesses: Guess[] = [];
-let wheelOffset = 0;
-const wheelInner = document.querySelector(".wheel-inner") as HTMLElement;
-const BAR_HEIGHT = 48; // whatever one bar's height is
 
 /* ---------- seeded RNG ---------- */
 function seededRandom(seed: number) {
@@ -192,8 +191,6 @@ function makeGuess(cardName: string) {
   const last = guesses[guesses.length - 1];
   const diff = last.index - answerIndex();
 
-  //spinWheel(diff);
-  //settleWheel();
   renderState();
 }
 
@@ -203,26 +200,7 @@ button.onclick = () => {
   if (match) makeGuess(match);
 };
 
-/* ---------- wheel logic ---------- */
 const answerIndex = () => getDailyIndex(cards.length);
-
-function spinWheel(diff: number) {
-  const barHeight = bars[0].offsetHeight;
-  const offset = Math.max(-5, Math.min(5, diff)) * barHeight;
-
-  bars.forEach(bar => {
-    bar.style.transform = `translateY(${-offset}px)`;
-  });
-}
-
-function settleWheel() {
-  setTimeout(() => {
-    bars.forEach(bar => {
-      bar.style.transform = "translateY(0)";
-    });
-    renderState();
-  }, 400); // must match CSS transition time
-}
 
 function renderState() {
   bars.forEach(b => (b.textContent = ""));
@@ -233,18 +211,10 @@ function renderState() {
   const last = guesses[guesses.length - 1];
   const diff = last ? last.index - answerIndex() : 0;
 
-  const center = bars[5];
-
   if (diff === 0) {
-    center.textContent = `${last.name} (${guesses.length} guesses)`;
-    center.classList.add("correct");
-    return;
+    answerBar.textContent = `${last.name} (${guesses.length} guesses)`;
+    answerBar.classList.add("correct");
   }
-  if (guesses.length == 1) {
-    const drawBar = bars[diff>0?6:3];
-    drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "↑" : "↓"}`;
-    drawBar.style.backgroundColor = guessColor(Math.abs(diff));
-  } else {
   const above = guesses
     .filter(g => g.index < answerIndex())
     .sort((a, b) => b.index - a.index); // closest above first
@@ -258,17 +228,21 @@ function renderState() {
     const g = above[0];
     const diff = answerIndex() - g.index;
     const bar = bars[3];
+    if(Math.abs(diff)>5){
     bar.textContent = `${g.name} | ${diff} ↓`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
+    }
   }
 
   // draw closest below (bar 6)
   if (below.length > 0) {
     const g = below[0];
     const diff = g.index - answerIndex();
-    const bar = bars[6];
+    const bar = bars[7];
+    if(Math.abs(diff) > 5){
     bar.textContent = `${g.name} | ${diff} ↑`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
+    }
   }
 
   // draw all guesses within 5 cards on exact bars
@@ -277,7 +251,7 @@ function renderState() {
     if (Math.abs(diff) <= 5 && diff !== 0) {
       const barIndex = 5 + diff;
       if (bars[barIndex]) {
-        bars[barIndex].textContent = `${g.name} | ${diff}`;
+        bars[barIndex].textContent = `${g.name} | ${Math.abs(diff) ${diff > 0 ? "↑" : "↓"}`;
         bars[barIndex].style.backgroundColor = guessColor(Math.abs(diff));
       }
     }
@@ -285,9 +259,8 @@ function renderState() {
 
 
   if (Math.abs(last.index - answerIndex()) > 5 && last != above[0] && last != below[0]) {
-    const lastBar = bars[diff>0?9:0];
+    const lastBar = bars[diff>0?10:0];
     lastBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "↑" : "↓"}`;
     lastBar.style.backgroundColor = guessColor(Math.abs(diff));
   }
-}
 }
