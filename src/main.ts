@@ -6,7 +6,9 @@ type Guess = {
 const input = document.getElementById("guessInput") as HTMLInputElement;
 const button = document.getElementById("guessButton") as HTMLButtonElement;
 const autocomplete = document.getElementById("autocomplete")!;
-const bars = Array.from(document.querySelectorAll(".bar"));
+const bars: HTMLElement[] = Array.from(
+  document.querySelectorAll(".bar")
+);
 
 let cards: string[] = [];
 let guesses: Guess[] = [];
