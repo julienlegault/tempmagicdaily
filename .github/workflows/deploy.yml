@@ -31,6 +31,7 @@ jobs:
 
       - name: Build
         run: |
+          mkdir -p dist
           npx tsc --project tsconfig.json
           cp -r public/* dist/
 
