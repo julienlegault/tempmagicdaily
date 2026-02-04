@@ -187,7 +187,11 @@ function makeGuess(cardName: string) {
   if (guessIndex === -1) return;
 
   guesses.push({ name: cardName, index: guessIndex });
-  animateWheel(guessIndex);
+  const last = guesses[guesses.length - 1];
+  const diff = last.index - answerIndex();
+
+  spinWheel(diff);
+  settleWheel();
 }
 
 button.onclick = () => {
@@ -199,22 +203,22 @@ button.onclick = () => {
 /* ---------- wheel logic ---------- */
 const answerIndex = () => getDailyIndex(cards.length);
 
-function animateWheel(guessIndex: number) {
-  const diff = guessIndex - answerIndex();
-  const direction = diff > 0 ? 1 : -1;
-
-  const steps = Math.min(Math.abs(diff), 7); // cap visual travel
-  const targetOffset = wheelOffset + direction * steps;
+function spinWheel(diff: number) {
+  const barHeight = bars[0].offsetHeight;
+  const offset = Math.max(-5, Math.min(5, diff)) * barHeight;
 
   bars.forEach(bar => {
-    bar.classList.add(direction > 0 ? "spin-down" : "spin-up");
+    bar.style.transform = `translateY(${-offset}px)`;
   });
+}
 
+function settleWheel() {
   setTimeout(() => {
-    bars.forEach(bar => bar.classList.remove("spin-down", "spin-up"));
-    wheelOffset = targetOffset;
-    renderWheel();
-  }, 500);
+    bars.forEach(bar => {
+      bar.style.transform = "translateY(0)";
+    });
+    renderState();
+  }, 400); // must match CSS transition time
 }
 
 function renderState() {
