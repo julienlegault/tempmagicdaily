@@ -192,8 +192,8 @@ function makeGuess(cardName: string) {
   const last = guesses[guesses.length - 1];
   const diff = last.index - answerIndex();
 
-  spinWheel(diff);
-  settleWheel();
+  //spinWheel(diff);
+  //settleWheel();
 }
 
 button.onclick = () => {
@@ -231,8 +231,6 @@ function renderState() {
   
   const last = guesses[guesses.length - 1];
   const diff = last ? last.index - answerIndex() : 0;
-
-  wheelInner.style.transform = `translateY(${-diff * BAR_HEIGHT}px)`;
 
   const center = bars[5];
 
@@ -291,15 +289,4 @@ function renderState() {
     lastBar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 }
-  bars.forEach((bar, i) => {
-  const dist = Math.abs(i - 5); // 5 = center bar
-  const scale = 1 - dist * 0.08;
-  const opacity = 1 - dist * 0.15;
-
-  bar.style.transform = `
-    translateY(${(i - 5) * BAR_HEIGHT}px)
-    scale(${Math.max(scale, 0.6)})
-  `;
-  bar.style.opacity = `${Math.max(opacity, 0)}`;
-});
 }
