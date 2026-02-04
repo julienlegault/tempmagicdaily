@@ -255,7 +255,7 @@ function renderState() {
     const g = above[0];
     const diff = answerIndex() - g.index;
     const bar = bars[3];
-    bar.textContent = `${g.name} | ${diff} v`;
+    bar.textContent = `${g.name} | ${diff} ↓`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 
@@ -264,7 +264,7 @@ function renderState() {
     const g = below[0];
     const diff = g.index - answerIndex();
     const bar = bars[6];
-    bar.textContent = `${g.name} | ${diff} ^`;
+    bar.textContent = `${g.name} | ${diff} ↑`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 
