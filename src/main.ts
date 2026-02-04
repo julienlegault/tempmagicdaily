@@ -52,7 +52,7 @@ function updateAutocomplete(value: string) {
   }
 }
 
-input.addEventListener("input", () => updateAutocomplete(input.value));
+//input.addEventListener("input", () => updateAutocomplete(input.value));
 
 /* ---------- guessing ---------- */
 function closestCard(name: string): string {
@@ -110,14 +110,54 @@ function renderState() {
   const center = bars[5];
 
   const last = guesses[guesses.length - 1];
-  const diff = Math.abs(last.index - answerIndex());
+  const diff = last.index - answerIndex();
 
   if (diff === 0) {
     center.textContent = `${last.name} (${guesses.length} guesses)`;
     center.classList.add("correct");
     return;
   }
+  if (guesses.length = 1) {
+    const drawBar = bars[diff>0?3:6];
+    drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "v" : "^"}`;
+    drawBar.classList.add("guess");
+  } else {
+  const above = guesses
+    .filter(g => g.index < answerIndex())
+    .sort((a, b) => b.index - a.index); // closest above first
 
-  center.textContent = `${diff} cards away`;
-  center.classList.add("guess");
+  const below = guesses
+    .filter(g => g.index > answerIndex())
+    .sort((a, b) => a.index - b.index); // closest below first
+
+  // draw closest above (bar 3)
+  if (above.length > 0) {
+    const g = above[0];
+    const diff = answerIndex() - g.index;
+    const bar = bars[3];
+    bar.textContent = `${g.name} | ${diff} ^`;
+    bar.classList.add("guess");
+  }
+
+  // draw closest below (bar 6)
+  if (below.length > 0) {
+    const g = below[0];
+    const diff = g.index - answerIndex();
+    const bar = bars[6];
+    bar.textContent = `${g.name} | ${diff} v`;
+    bar.classList.add("guess");
+  }
+
+  // draw all guesses within 5 cards on exact bars
+  guesses.forEach(g => {
+    const diff = g.index - answerIndex();
+    if (Math.abs(diff) <= 5 && diff !== 0) {
+      const barIndex = 5 + diff;
+      if (bars[barIndex]) {
+        bars[barIndex].textContent = `${g.name}`;
+        bars[barIndex].classList.add("guess");
+      }
+    }
+  });
+  }
 }
