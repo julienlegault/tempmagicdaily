@@ -52,7 +52,7 @@ function updateAutocomplete(value: string) {
   }
 }
 
-//input.addEventListener("input", () => updateAutocomplete(input.value));
+input.addEventListener("input", () => updateAutocomplete(input.value));
 
 /* ---------- guessing ---------- */
 function closestCard(input: string): string {
@@ -179,4 +179,5 @@ function renderState() {
     const lastBar = bars[diff>0?9:0];
     lastBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
     lastBar.classList.add("guess");
+  }
 }
