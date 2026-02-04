@@ -181,3 +181,4 @@ function renderState() {
     lastBar.classList.add("guess");
   }
 }
+}
