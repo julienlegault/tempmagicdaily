@@ -173,7 +173,7 @@ function renderState() {
       }
     }
   });
-  }
+
 
   if (last.index - answerIndex > 5 && last != above[0] && last != below[0]) {
     const lastBar = bars[diff>0?9:0];
