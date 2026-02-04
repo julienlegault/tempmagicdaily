@@ -28,7 +28,7 @@ function getDailyIndex(max: number) {
 }
 
 /* ---------- load cards ---------- */
-fetch("./cards.json")
+fetch("./formatted_card_list.json")
 .then(r => r.json())
   .then((data: string[]) => {
     cards = data.sort();
