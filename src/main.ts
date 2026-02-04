@@ -13,7 +13,7 @@ const bars: HTMLElement[] = Array.from(
 let cards: string[] = [];
 let guesses: Guess[] = [];
 let wheelOffset = 0;
-const wheelInner = document.querySelector(".wheel-inner");
+const wheelInner = document.querySelector(".wheel-inner") as HTMLElement;
 const BAR_HEIGHT = 48; // whatever one bar's height is
 
 /* ---------- seeded RNG ---------- */
@@ -300,6 +300,6 @@ function renderState() {
     translateY(${(i - 5) * BAR_HEIGHT}px)
     scale(${Math.max(scale, 0.6)})
   `;
-  bar.style.opacity = Math.max(opacity, 0);
+  bar.style.opacity = `${Math.max(opacity, 0)}`;
 });
 }
