@@ -27,6 +27,29 @@ function getDailyIndex(max: number) {
   return Math.floor(rand() * max);
 }
 
+function guessColor(diff: number): string {
+  // diff = absolute distance from answer
+  const MAX = 500; // distance where color is fully "far"
+  const d = Math.min(diff, MAX) / MAX;
+
+  // interpolate red → yellow → green
+  let r, g, b = 0;
+
+  if (d > 0.5) {
+    // red → yellow
+    const t = (d - 0.5) * 2;
+    r = 180;
+    g = Math.round(180 * (1 - t));
+  } else {
+    // yellow → green
+    const t = d * 2;
+    r = Math.round(180 * t);
+    g = 180;
+  }
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 /* ---------- load cards ---------- */
 fetch("./formatted_card_list.json")
 .then(r => r.json())
@@ -185,11 +208,14 @@ function animateWheel(guessIndex: number) {
   setTimeout(() => {
     bars.forEach(b => b.classList.remove("spin-up", "spin-down"));
     renderState();
-  }, 600);
+  }, 1200);
 }
 
 function renderState() {
   bars.forEach(b => (b.textContent = ""));
+  bars.forEach(bar => {
+    bar.style.backgroundColor = "";
+  });
 
   const center = bars[5];
 
@@ -204,7 +230,7 @@ function renderState() {
   if (guesses.length == 1) {
     const drawBar = bars[diff>0?6:3];
     drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
-    drawBar.classList.add("guess");
+    drawBar.style.backgroundColor = guessColor(Math.abs(diff));
   } else {
   const above = guesses
     .filter(g => g.index < answerIndex())
@@ -220,7 +246,7 @@ function renderState() {
     const diff = answerIndex() - g.index;
     const bar = bars[3];
     bar.textContent = `${g.name} | ${diff} v`;
-    bar.classList.add("guess");
+    bar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 
   // draw closest below (bar 6)
@@ -229,7 +255,7 @@ function renderState() {
     const diff = g.index - answerIndex();
     const bar = bars[6];
     bar.textContent = `${g.name} | ${diff} ^`;
-    bar.classList.add("guess");
+    bar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 
   // draw all guesses within 5 cards on exact bars
@@ -239,7 +265,7 @@ function renderState() {
       const barIndex = 5 + diff;
       if (bars[barIndex]) {
         bars[barIndex].textContent = `${g.name} | ${diff}`;
-        bars[barIndex].classList.add("guess");
+        bars[barIndex].style.backgroundColor = guessColor(Math.abs(diff));
       }
     }
   });
@@ -248,7 +274,7 @@ function renderState() {
   if (Math.abs(last.index - answerIndex()) > 5 && last != above[0] && last != below[0]) {
     const lastBar = bars[diff>0?9:0];
     lastBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
-    lastBar.classList.add("guess");
+    lastBar.style.backgroundColor = guessColor(Math.abs(diff));
   }
 }
 }
