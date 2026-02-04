@@ -131,7 +131,7 @@ function renderState() {
     center.classList.add("correct");
     return;
   }
-  if (guesses.length = 1) {
+  if (guesses.length == 1) {
     const drawBar = bars[diff>0?3:6];
     drawBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "^" : "v"}`;
     drawBar.classList.add("guess");
