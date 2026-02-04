@@ -12,6 +12,7 @@ const bars: HTMLElement[] = Array.from(
 
 let cards: string[] = [];
 let guesses: Guess[] = [];
+let wheelOffset = 0;
 
 /* ---------- seeded RNG ---------- */
 function seededRandom(seed: number) {
@@ -200,17 +201,20 @@ const answerIndex = () => getDailyIndex(cards.length);
 
 function animateWheel(guessIndex: number) {
   const diff = guessIndex - answerIndex();
-  const direction = diff > 0 ? "spin-down" : "spin-up";
+  const direction = diff > 0 ? 1 : -1;
 
-  bars.forEach(b => {
-    b.classList.remove("spin-up", "spin-down", "guess", "correct");
-    b.classList.add(direction);
+  const steps = Math.min(Math.abs(diff), 7); // cap visual travel
+  const targetOffset = wheelOffset + direction * steps;
+
+  bars.forEach(bar => {
+    bar.classList.add(direction > 0 ? "spin-down" : "spin-up");
   });
 
   setTimeout(() => {
-    bars.forEach(b => b.classList.remove("spin-up", "spin-down"));
-    renderState();
-  }, 1200);
+    bars.forEach(bar => bar.classList.remove("spin-down", "spin-up"));
+    wheelOffset = targetOffset;
+    renderWheel();
+  }, 500);
 }
 
 function renderState() {
