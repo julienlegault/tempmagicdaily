@@ -40,9 +40,7 @@ function updateAutocomplete(value: string) {
   if (!value) return;
 
   const v = value.toLowerCase();
-  const matches = cards
-    .filter(c => c.toLowerCase().includes(v))
-    .slice(0, 15);
+  const matches = getRanked(input.value, 15);
 
   for (const card of matches) {
     const li = document.createElement("li");
@@ -54,36 +52,107 @@ function updateAutocomplete(value: string) {
 
 input.addEventListener("input", () => updateAutocomplete(input.value));
 
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    const match = getRanked(input.value, 1)[0];
+    if (match) makeGuess(match);
+  }
+});
+
 /* ---------- guessing ---------- */
-function closestCard(input: string): string {
-  const query = input.toLowerCase();
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  let best = cards[0];
-  let bestScore = Infinity;
+// small Levenshtein (good enough + fast)
+function levenshtein(a: string, b: string): number {
+  const dp = Array.from({ length: a.length + 1 }, () =>
+    new Array(b.length + 1).fill(0)
+  );
 
-  for (const card of cards) {
-    const name = card.toLowerCase();
-    let score = 1000;
+  for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
 
-    if (name === query) {
-      score = 0;
-    } else if (name.startsWith(query)) {
-      score = 1;
-    } else if (name.includes(query)) {
-      score = 2;
-    } else {
-      // alphabetical distance, but heavily de-weighted
-      score = 100 + Math.abs(name.localeCompare(query));
-    }
-
-    if (score < bestScore) {
-      bestScore = score;
-      best = card;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
     }
   }
 
-  return best;
+  return dp[a.length][b.length];
 }
+
+let lastQuery = "";
+let lastResults: string[] = [];
+
+function getRanked(query: string, limit: number): string[] {
+  if (!query) return [];
+
+  if (query === lastQuery) {
+    return lastResults.slice(0, limit);
+  }
+
+  lastQuery = query;
+  lastResults = rankedSearch(query);
+  return lastResults.slice(0, limit);
+}
+
+function rankedSearch(query: string, limit = 15): string[] {
+  const q = normalize(query);
+  if (!q) return [];
+
+  return cards
+    .map(card => {
+      const n = normalize(card);
+      let score = 10000;
+
+      if (n === q) {
+        score = 0;
+      }
+      // phrase appears at word boundary
+      else if (n.startsWith(q)) {
+        score = 10;
+      }
+      else if (n.includes(" " + q)) {
+        score = 20;
+      }
+      // phrase appears later but intact
+      else if (n.includes(q)) {
+        score = 30;
+      }
+      // fuzzy: compare against each word chunk
+      else {
+        const words = n.split(" ");
+        const qWords = q.split(" ");
+
+        let best = Infinity;
+        for (let i = 0; i <= words.length - qWords.length; i++) {
+          const slice = words.slice(i, i + qWords.length).join(" ");
+          best = Math.min(best, levenshtein(slice, q));
+        }
+
+        score = 100 + best;
+      }
+
+      return { card, score, name: n };
+    })
+    .sort((a, b) => {
+      if (a.score !== b.score) return a.score - b.score;
+      // tie-breaker: alphabetical AFTER relevance
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, limit)
+    .map(r => r.card);
+}
+
 function makeGuess(cardName: string) {
   autocomplete.innerHTML = "";
   input.value = "";
@@ -97,7 +166,8 @@ function makeGuess(cardName: string) {
 
 button.onclick = () => {
   if (!input.value) return;
-  makeGuess(closestCard(input.value));
+  const match = getRanked(input.value, 1)[0];
+  if (match) makeGuess(match);
 };
 
 /* ---------- wheel logic ---------- */
