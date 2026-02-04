@@ -1,7 +1,7 @@
 // Card list as a global variable for local testing
 // Updated at: 2026-02-01 06:12:18
 
-window.cardList = [
+[
   "fabrication-foundry",
   "vastwood-hydra",
   "deathsprout",
