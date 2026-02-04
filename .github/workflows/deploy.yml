@@ -31,7 +31,7 @@ jobs:
 
       - name: Build
         run: |
-          tsc
+          npx tsc --project tsconfig.json
           cp -r public/* dist/
 
       - name: Upload artifact
