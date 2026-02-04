@@ -71,7 +71,7 @@ button {
   opacity: 0.3;
 }
 
-.bar[data-index="10] {
+.bar[data-index="10"] {
   transform: rotateX(-50deg);
   opacity: 0.3;
 }
