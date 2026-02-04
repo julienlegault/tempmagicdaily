@@ -28,12 +28,7 @@ function getDailyIndex(max: number) {
 }
 
 /* ---------- load cards ---------- */
-fetch("cards.json")
-  .then(r => r.json())
-  .then((data: string[]) => {
-    cards = data;
-  });
-
+cards = cardList.sort();
 /* ---------- autocomplete ---------- */
 function updateAutocomplete(value: string) {
   autocomplete.innerHTML = "";
