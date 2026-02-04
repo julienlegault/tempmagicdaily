@@ -55,21 +55,35 @@ function updateAutocomplete(value: string) {
 //input.addEventListener("input", () => updateAutocomplete(input.value));
 
 /* ---------- guessing ---------- */
-function closestCard(name: string): string {
-  const lower = name.toLowerCase();
+function closestCard(input: string): string {
+  const query = input.toLowerCase();
+
   let best = cards[0];
   let bestScore = Infinity;
 
-  for (const c of cards) {
-    const score = Math.abs(c.toLowerCase().localeCompare(lower));
+  for (const card of cards) {
+    const name = card.toLowerCase();
+    let score = 1000;
+
+    if (name === query) {
+      score = 0;
+    } else if (name.startsWith(query)) {
+      score = 1;
+    } else if (name.includes(query)) {
+      score = 2;
+    } else {
+      // alphabetical distance, but heavily de-weighted
+      score = 100 + Math.abs(name.localeCompare(query));
+    }
+
     if (score < bestScore) {
       bestScore = score;
-      best = c;
+      best = card;
     }
   }
+
   return best;
 }
-
 function makeGuess(cardName: string) {
   autocomplete.innerHTML = "";
   input.value = "";
