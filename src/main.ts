@@ -251,7 +251,7 @@ function renderState() {
     if (Math.abs(diff) <= 5 && diff !== 0) {
       const barIndex = 5 + diff;
       if (bars[barIndex]) {
-        bars[barIndex].textContent = `${g.name} | ${Math.abs(diff) ${diff > 0 ? "↑" : "↓"}`;
+        bars[barIndex].textContent = `${g.name} | ${Math.abs(diff)} ${diff > 0 ? "↑" : "↓"}`;
         bars[barIndex].style.backgroundColor = guessColor(Math.abs(diff));
       }
     }
