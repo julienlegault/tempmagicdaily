@@ -97,19 +97,19 @@ button {
 }
 
 .spin-up {
-  animation: spinUp 0.6s ease-out;
+  animation: spinUp 0.5s ease-out;
 }
 
 .spin-down {
-  animation: spinDown 0.6s ease-out;
+  animation: spinDown 0.5s ease-out;
 }
 
-@keyframes spinUp {
+@keyframes spin-up {
   from { transform: translateY(40px); }
   to { transform: translateY(0); }
 }
 
-@keyframes spinDown {
+@keyframes spin-down {
   from { transform: translateY(-40px); }
   to { transform: translateY(0); }
 }
