@@ -339,7 +339,7 @@ function handleGuess() {
     guessStatus.textContent = `${guessedSet.name} was not the highest-price printing.`;
 }
 async function setupGame() {
-    const cardsResponse = await fetch("/formatted_card_list.json");
+    const cardsResponse = await fetch("../formatted_card_list.json");
     if (!cardsResponse.ok) {
         throw new Error("Failed to load card list.");
     }

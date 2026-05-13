@@ -453,7 +453,7 @@ function handleGuess() {
 }
 
 async function setupGame() {
-  const cardsResponse = await fetch("/formatted_card_list.json");
+  const cardsResponse = await fetch("../formatted_card_list.json");
   if (!cardsResponse.ok) {
     throw new Error("Failed to load card list.");
   }
