@@ -85,6 +85,7 @@ const PRICE_COLOR_CLOSE = { r: 46, g: 204, b: 113 };
 const PRICE_COLOR_FAR = { r: 231, g: 76, b: 60 };
 const PRICE_COLOR_NO_DATA = "rgb(140, 65, 65)";
 const PRICE_DIFF_THRESHOLD = 0.5;
+const NO_PRINTING_TEXT = "No printing";
 
 function seededRandom(seed: number) {
   return () => {
@@ -367,7 +368,7 @@ function renderAutocomplete(query: string) {
 
 function formatPrice(value: number | null): string {
   if (value === null) {
-    return "No printing";
+    return NO_PRINTING_TEXT;
   }
   return `$${value.toFixed(2)}`;
 }
@@ -394,7 +395,7 @@ function priceHeatColor(guessPrice: number | null, answerPrice: number): string 
 
 function getGuessResultText(printing: PrintingInfo | null, finish: Finish): string {
   if (!printing) {
-    return "No printing";
+    return NO_PRINTING_TEXT;
   }
 
   const price = getPrintingPrice(printing, finish);
@@ -402,7 +403,7 @@ function getGuessResultText(printing: PrintingInfo | null, finish: Finish): stri
     return formatPrice(price);
   }
 
-  return finish === "foil" ? "No foil printing" : "No printing";
+  return finish === "foil" ? "No foil printing" : NO_PRINTING_TEXT;
 }
 
 function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null) {
@@ -422,8 +423,9 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   const priceCell = document.createElement("span");
   priceCell.className = "result-price";
   const price = getPrintingPrice(printing, finish);
+  const winningPrice = getPrintingPrice(correctPrinting, correctFinish) ?? 0;
   priceCell.textContent = getGuessResultText(printing, finish);
-  priceCell.style.backgroundColor = priceHeatColor(price, getPrintingPrice(correctPrinting, correctFinish) ?? 0);
+  priceCell.style.backgroundColor = priceHeatColor(price, winningPrice);
 
   row.appendChild(setCell);
   row.appendChild(priceCell);
