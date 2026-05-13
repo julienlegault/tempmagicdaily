@@ -80,6 +80,7 @@ const RNG_MODULUS = 233280;
 const PRICE_COLOR_CLOSE = { r: 46, g: 204, b: 113 };
 const PRICE_COLOR_FAR = { r: 231, g: 76, b: 60 };
 const PRICE_COLOR_NO_DATA = "rgb(140, 65, 65)";
+const PRICE_DIFF_THRESHOLD = 0.5;
 
 function seededRandom(seed: number) {
   return () => {
@@ -230,7 +231,8 @@ async function fetchAllSets(): Promise<SetInfo[]> {
 
 async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
   const printings: PrintingInfo[] = [];
-  const query = `!"${cardName}" unique:prints game:paper`;
+  const escapedCardName = cardName.replace(/[\"\\]/g, "\\$&");
+  const query = `!"${escapedCardName}" unique:prints game:paper`;
   let nextPage = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}`;
 
   while (nextPage) {
@@ -263,11 +265,11 @@ function rankSets(query: string, limit: number): SetInfo[] {
     return [];
   }
 
-  if (query === lastSetQuery) {
+  if (cleaned === lastSetQuery) {
     return lastSetResults.slice(0, limit);
   }
 
-  lastSetQuery = query;
+  lastSetQuery = cleaned;
   const ranked = allSets
     .map(set => {
       const code = set.code.toLowerCase();
@@ -340,8 +342,8 @@ function priceHeatColor(guessPrice: number | null | undefined, answerPrice: numb
       : PRICE_COLOR_NO_DATA;
   }
 
-  const ratio = Math.abs(guessPrice - answerPrice) / Math.max(answerPrice, Number.EPSILON);
-  const clamped = Math.min(ratio / 0.5, 1);
+  const ratio = Math.abs(guessPrice - answerPrice) / answerPrice;
+  const clamped = Math.min(ratio / PRICE_DIFF_THRESHOLD, 1);
 
   const r = Math.round(PRICE_COLOR_CLOSE.r + (PRICE_COLOR_FAR.r - PRICE_COLOR_CLOSE.r) * clamped);
   const g = Math.round(PRICE_COLOR_CLOSE.g + (PRICE_COLOR_FAR.g - PRICE_COLOR_CLOSE.g) * clamped);
@@ -449,7 +451,7 @@ function handleGuess() {
 }
 
 async function setupGame() {
-  const cardsResponse = await fetch("../formatted_card_list.json");
+  const cardsResponse = await fetch("/formatted_card_list.json");
   if (!cardsResponse.ok) {
     throw new Error("Failed to load card list.");
   }
