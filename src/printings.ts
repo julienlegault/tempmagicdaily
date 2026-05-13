@@ -131,6 +131,11 @@ function formatFinish(finish: Finish): string {
   return finish === "foil" ? "Foil" : "Non-foil";
 }
 
+function getSelectedFinish(): Finish {
+  const finish = finishGuessInput.value;
+  return finish === "foil" || finish === "nonfoil" ? finish : "nonfoil";
+}
+
 function getCardImage(card: ScryfallCard): string | null {
   return card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal ?? null;
 }
@@ -476,7 +481,7 @@ function handleGuess() {
     return;
   }
 
-  const guessedFinish = finishGuessInput.value === "foil" ? "foil" : "nonfoil";
+  const guessedFinish = getSelectedFinish();
   const guessedKey = `${guessedSet.code}:${guessedFinish}`;
 
   if (guessedPrintingKeys.has(guessedKey)) {
