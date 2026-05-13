@@ -151,7 +151,7 @@ async function fetchAllSets() {
 }
 async function fetchAllPrintings(cardName) {
     const printings = [];
-    const escapedCardName = cardName.replace(/[\"\\]/g, "\\$&");
+    const escapedCardName = cardName.replace(/[\"'\\]/g, "\\$&");
     const query = `!"${escapedCardName}" unique:prints game:paper`;
     let nextPage = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}`;
     while (nextPage) {
@@ -243,7 +243,7 @@ function formatPrice(value) {
     return `$${value.toFixed(2)}`;
 }
 function priceHeatColor(guessPrice, answerPrice) {
-    if (guessPrice == null) {
+    if (guessPrice === null) {
         return PRICE_COLOR_NO_DATA;
     }
     if (answerPrice <= 0) {
@@ -281,10 +281,12 @@ function showWinModal() {
     winMessage.textContent = `Correct! ${selectedCardName}'s highest Scryfall price is in ${correctPrinting.setName} at ${formatPrice(correctPrinting.price)}.`;
     if (correctPrinting.imageUrl) {
         winCardImage.src = correctPrinting.imageUrl;
+        winCardImage.alt = `${selectedCardName} from ${correctPrinting.setName}`;
         winCardImage.classList.remove("hidden");
     }
     else {
         winCardImage.removeAttribute("src");
+        winCardImage.alt = "";
         winCardImage.classList.add("hidden");
     }
     winModal.classList.remove("hidden");

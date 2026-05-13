@@ -231,7 +231,7 @@ async function fetchAllSets(): Promise<SetInfo[]> {
 
 async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
   const printings: PrintingInfo[] = [];
-  const escapedCardName = cardName.replace(/[\"\\]/g, "\\$&");
+  const escapedCardName = cardName.replace(/[\"'\\]/g, "\\$&");
   const query = `!"${escapedCardName}" unique:prints game:paper`;
   let nextPage = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}`;
 
@@ -332,8 +332,8 @@ function formatPrice(value: number | null): string {
   return `$${value.toFixed(2)}`;
 }
 
-function priceHeatColor(guessPrice: number | null | undefined, answerPrice: number): string {
-  if (guessPrice == null) {
+function priceHeatColor(guessPrice: number | null, answerPrice: number): string {
+  if (guessPrice === null) {
     return PRICE_COLOR_NO_DATA;
   }
   if (answerPrice <= 0) {
@@ -382,9 +382,11 @@ function showWinModal() {
 
   if (correctPrinting.imageUrl) {
     winCardImage.src = correctPrinting.imageUrl;
+    winCardImage.alt = `${selectedCardName} from ${correctPrinting.setName}`;
     winCardImage.classList.remove("hidden");
   } else {
     winCardImage.removeAttribute("src");
+    winCardImage.alt = "";
     winCardImage.classList.add("hidden");
   }
 
