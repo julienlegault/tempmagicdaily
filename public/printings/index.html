@@ -18,6 +18,10 @@
     <section class="guess-panel">
       <div class="guess-row">
         <input id="setGuessInput" type="text" placeholder="Guess by set name or set code…" autocomplete="off" />
+        <select id="finishGuessInput" aria-label="Select foil or non-foil">
+          <option value="nonfoil">Non-foil</option>
+          <option value="foil">Foil</option>
+        </select>
         <button id="setGuessButton">Guess</button>
       </div>
       <ul id="setAutocomplete" class="autocomplete"></ul>
@@ -26,9 +30,8 @@
 
     <section class="results">
       <div class="results-header results-row">
-        <span>Set</span>
-        <span>Has Printing</span>
-        <span>Price</span>
+        <span>Guess</span>
+        <span>Result</span>
       </div>
       <div id="resultsGrid"></div>
     </section>
