@@ -32,6 +32,7 @@
       <div class="results-header results-row">
         <span>Guess</span>
         <span>Result</span>
+        <span>Year</span>
       </div>
       <div id="resultsGrid"></div>
     </section>
@@ -43,6 +44,14 @@
       <p id="winMessage"></p>
       <img id="winCardImage" alt="Winning card printing" />
       <button id="closeWinModal">Close</button>
+    </div>
+  </div>
+
+  <div id="versionPickerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="versionPickerTitle">
+    <div class="modal-content version-modal-content">
+      <h2 id="versionPickerTitle">Choose a version</h2>
+      <div id="versionPickerGrid" class="version-grid"></div>
+      <button id="closeVersionPickerModal">Cancel</button>
     </div>
   </div>
 
