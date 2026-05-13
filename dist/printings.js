@@ -152,7 +152,8 @@ async function fetchAllPrintings(cardName) {
         }
         const payload = (await response.json());
         for (const card of payload.data) {
-            const price = Math.max(parsePrice(card.prices.usd), parsePrice(card.prices.usd_foil), parsePrice(card.prices.usd_etched));
+            const priceFields = [card.prices.usd, card.prices.usd_foil, card.prices.usd_etched];
+            const price = Math.max(...priceFields.map(parsePrice));
             printings.push({
                 setCode: card.set.toLowerCase(),
                 setName: card.set_name,
@@ -233,8 +234,11 @@ function formatPrice(value) {
     return `$${value.toFixed(2)}`;
 }
 function priceHeatColor(guessPrice, answerPrice) {
-    if (guessPrice === null || answerPrice <= 0) {
+    if (guessPrice === null) {
         return "rgb(140, 65, 65)";
+    }
+    if (answerPrice <= 0) {
+        return guessPrice <= 0 ? "rgb(46, 204, 113)" : "rgb(140, 65, 65)";
     }
     const ratio = Math.abs(guessPrice - answerPrice) / answerPrice;
     const clamped = Math.min(ratio / 0.5, 1);
@@ -315,7 +319,7 @@ function handleGuess() {
     guessedSetCodes.add(guessedSet.code);
     const printing = printingBySet.get(guessedSet.code);
     const hasPrinting = Boolean(printing);
-    const price = hasPrinting ? printing?.price ?? 0 : null;
+    const price = hasPrinting ? printing.price : null;
     addGuessRow(guessedSet, hasPrinting, price);
     setGuessInput.value = "";
     setGuessInput.dataset.selectedCode = "";
@@ -354,7 +358,13 @@ async function setupGame() {
             printingBySet.set(printing.setCode, printing);
         }
     }
-    correctPrinting = [...printingBySet.values()].sort((a, b) => b.price - a.price)[0];
+    let highestPricePrinting = null;
+    for (const printing of printingBySet.values()) {
+        if (!highestPricePrinting || printing.price > highestPricePrinting.price) {
+            highestPricePrinting = printing;
+        }
+    }
+    correctPrinting = highestPricePrinting;
     if (!correctPrinting) {
         throw new Error("Could not determine a correct answer.");
     }
