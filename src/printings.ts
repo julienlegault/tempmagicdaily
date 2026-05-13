@@ -73,6 +73,7 @@ let selectedCard: ScryfallCard | null = null;
 let printingBySet = new Map<string, PrintingInfo>();
 let correctPrinting: PrintingInfo | null = null;
 let correctFinish: Finish = "nonfoil";
+let correctAnswerKeys = new Set<string>();
 let guessedPrintingKeys = new Set<string>();
 let lastSetQuery = "";
 let lastSetResults: SetInfo[] = [];
@@ -433,17 +434,17 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   resultsGrid.prepend(row);
 }
 
-function showWinModal() {
-  if (!correctPrinting) {
+function showWinModal(printing: PrintingInfo, finish: Finish) {
+  const winningPrice = getPrintingPrice(printing, finish);
+  if (winningPrice === null) {
     return;
   }
 
-  const winningPrice = getPrintingPrice(correctPrinting, correctFinish);
-  winMessage.textContent = `Correct! ${selectedCardName}'s highest Scryfall price is the ${formatFinish(correctFinish).toLowerCase()} printing in ${correctPrinting.setName} at ${formatPrice(winningPrice)}.`;
+  winMessage.textContent = `Correct! ${selectedCardName}'s highest Scryfall price is the ${formatFinish(finish).toLowerCase()} printing in ${printing.setName} at ${formatPrice(winningPrice)}.`;
 
-  if (correctPrinting.imageUrl) {
-    winCardImage.src = correctPrinting.imageUrl;
-    winCardImage.alt = `${selectedCardName} from ${correctPrinting.setName}`;
+  if (printing.imageUrl) {
+    winCardImage.src = printing.imageUrl;
+    winCardImage.alt = `${selectedCardName} from ${printing.setName}`;
     winCardImage.classList.remove("hidden");
   } else {
     winCardImage.removeAttribute("src");
@@ -504,9 +505,9 @@ function handleGuess() {
   setGuessInput.dataset.selectedCode = "";
   setAutocomplete.innerHTML = "";
 
-  if (guessedSet.code === correctPrinting.setCode && guessedFinish === correctFinish) {
+  if (correctAnswerKeys.has(guessedKey) && printing) {
     guessStatus.textContent = "Correct!";
-    showWinModal();
+    showWinModal(printing, guessedFinish);
     return;
   }
 
@@ -558,12 +559,17 @@ async function setupGame() {
   let highestPricePrinting: PrintingInfo | null = null;
   let highestPriceFinish: Finish = "nonfoil";
   let highestPrice = -1;
+  correctAnswerKeys.clear();
   for (const printing of printingBySet.values()) {
     const nonfoilPrice = printing.prices.nonfoil;
     if (nonfoilPrice !== null && nonfoilPrice > highestPrice) {
       highestPrice = nonfoilPrice;
       highestPriceFinish = "nonfoil";
       highestPricePrinting = printing;
+      correctAnswerKeys.clear();
+      correctAnswerKeys.add(`${printing.setCode}:nonfoil`);
+    } else if (nonfoilPrice !== null && nonfoilPrice === highestPrice) {
+      correctAnswerKeys.add(`${printing.setCode}:nonfoil`);
     }
 
     const foilPrice = printing.prices.foil;
@@ -571,6 +577,10 @@ async function setupGame() {
       highestPrice = foilPrice;
       highestPriceFinish = "foil";
       highestPricePrinting = printing;
+      correctAnswerKeys.clear();
+      correctAnswerKeys.add(`${printing.setCode}:foil`);
+    } else if (foilPrice !== null && foilPrice === highestPrice) {
+      correctAnswerKeys.add(`${printing.setCode}:foil`);
     }
   }
 
