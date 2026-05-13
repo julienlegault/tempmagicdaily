@@ -7,11 +7,13 @@ type SetInfo = {
   name: string;
 };
 
+type Finish = "nonfoil" | "foil";
+
 type PrintingInfo = {
   setCode: string;
   setName: string;
-  price: number;
   imageUrl: string | null;
+  prices: Record<Finish, number | null>;
 };
 
 type ScryfallCard = {
@@ -54,6 +56,7 @@ type ScryfallList<T> = {
 };
 
 const setGuessInput = document.getElementById("setGuessInput") as HTMLInputElement;
+const finishGuessInput = document.getElementById("finishGuessInput") as HTMLSelectElement;
 const setGuessButton = document.getElementById("setGuessButton") as HTMLButtonElement;
 const setAutocomplete = document.getElementById("setAutocomplete") as HTMLUListElement;
 const cardFrame = document.getElementById("cardFrame") as HTMLElement;
@@ -69,7 +72,8 @@ let selectedCardName = "";
 let selectedCard: ScryfallCard | null = null;
 let printingBySet = new Map<string, PrintingInfo>();
 let correctPrinting: PrintingInfo | null = null;
-let guessedSetCodes = new Set<string>();
+let correctFinish: Finish = "nonfoil";
+let guessedPrintingKeys = new Set<string>();
 let lastSetQuery = "";
 let lastSetResults: SetInfo[] = [];
 
@@ -103,12 +107,32 @@ function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
 }
 
-function parsePrice(value: string | null): number {
+function parsePrice(value: string | null): number | null {
   if (!value) {
-    return 0;
+    return null;
   }
   const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function maxPrice(...values: Array<number | null>): number | null {
+  const numbers = values.filter((value): value is number => value !== null);
+  return numbers.length ? Math.max(...numbers) : null;
+}
+
+function getPrintingPrice(printing: PrintingInfo | null, finish: Finish): number | null {
+  if (!printing) {
+    return null;
+  }
+  return printing.prices[finish];
+}
+
+function getOverallPrintingPrice(printing: PrintingInfo): number {
+  return maxPrice(printing.prices.nonfoil, printing.prices.foil) ?? 0;
+}
+
+function formatFinish(finish: Finish): string {
+  return finish === "foil" ? "Foil" : "Non-foil";
 }
 
 function getCardImage(card: ScryfallCard): string | null {
@@ -180,19 +204,31 @@ function renderCardFrame(card: ScryfallCard) {
   oracle.className = "card-oracle";
   oracle.textContent = oracleText || "No rules text";
 
+  const artPlaceholder = document.createElement("div");
+  artPlaceholder.className = "card-art-placeholder";
+  artPlaceholder.setAttribute("aria-hidden", "true");
+
   const typeRow = document.createElement("div");
   typeRow.className = "card-type-row";
   const type = document.createElement("span");
   type.textContent = typeLine;
+  typeRow.appendChild(type);
+
+  const textBox = document.createElement("div");
+  textBox.className = "card-text-box";
+  const statsRow = document.createElement("div");
+  statsRow.className = "card-text-stats";
   const statsEl = document.createElement("span");
   statsEl.className = "card-stats";
   statsEl.textContent = stats;
-  typeRow.appendChild(type);
-  typeRow.appendChild(statsEl);
+  statsRow.appendChild(statsEl);
 
   cardFrame.appendChild(nameRow);
-  cardFrame.appendChild(oracle);
+  cardFrame.appendChild(artPlaceholder);
   cardFrame.appendChild(typeRow);
+  textBox.appendChild(oracle);
+  textBox.appendChild(statsRow);
+  cardFrame.appendChild(textBox);
 }
 
 async function fetchAllSets(): Promise<SetInfo[]> {
@@ -243,13 +279,16 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
     const payload = (await response.json()) as ScryfallList<ScryfallCard>;
 
     for (const card of payload.data) {
-      const priceFields = [card.prices.usd, card.prices.usd_foil, card.prices.usd_etched];
-      const price = Math.max(...priceFields.map(parsePrice));
+      const nonfoilPrice = parsePrice(card.prices.usd);
+      const foilPrice = maxPrice(parsePrice(card.prices.usd_foil), parsePrice(card.prices.usd_etched));
       printings.push({
         setCode: card.set.toLowerCase(),
         setName: card.set_name,
-        price,
-        imageUrl: getCardImage(card)
+        imageUrl: getCardImage(card),
+        prices: {
+          nonfoil: nonfoilPrice,
+          foil: foilPrice
+        }
       });
     }
 
@@ -327,7 +366,7 @@ function renderAutocomplete(query: string) {
 
 function formatPrice(value: number | null): string {
   if (value === null) {
-    return "N/A";
+    return "No printing";
   }
   return `$${value.toFixed(2)}`;
 }
@@ -352,23 +391,40 @@ function priceHeatColor(guessPrice: number | null, answerPrice: number): string 
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-function addGuessRow(set: SetInfo, hasPrinting: boolean, price: number | null) {
+function getGuessResultText(printing: PrintingInfo | null, finish: Finish): string {
+  if (!printing) {
+    return "No printing";
+  }
+
+  const price = getPrintingPrice(printing, finish);
+  if (price !== null) {
+    return formatPrice(price);
+  }
+
+  return finish === "foil" ? "No foil printing" : "No non-foil printing";
+}
+
+function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null) {
   const row = document.createElement("div");
   row.className = "result-item results-row";
 
-  const setCell = document.createElement("span");
-  setCell.textContent = `${set.name} (${set.code.toUpperCase()})`;
-
-  const hasPrintingCell = document.createElement("span");
-  hasPrintingCell.textContent = hasPrinting ? "✓" : "✗";
+  const setCell = document.createElement("div");
+  setCell.className = "result-guess";
+  const setName = document.createElement("span");
+  setName.textContent = `${set.name} (${set.code.toUpperCase()})`;
+  const finishCell = document.createElement("span");
+  finishCell.className = "result-finish";
+  finishCell.textContent = formatFinish(finish);
+  setCell.appendChild(setName);
+  setCell.appendChild(finishCell);
 
   const priceCell = document.createElement("span");
   priceCell.className = "result-price";
-  priceCell.textContent = formatPrice(price);
-  priceCell.style.backgroundColor = priceHeatColor(price, correctPrinting?.price ?? 0);
+  const price = getPrintingPrice(printing, finish);
+  priceCell.textContent = getGuessResultText(printing, finish);
+  priceCell.style.backgroundColor = priceHeatColor(price, getPrintingPrice(correctPrinting, correctFinish) ?? 0);
 
   row.appendChild(setCell);
-  row.appendChild(hasPrintingCell);
   row.appendChild(priceCell);
   resultsGrid.prepend(row);
 }
@@ -378,7 +434,8 @@ function showWinModal() {
     return;
   }
 
-  winMessage.textContent = `Correct! ${selectedCardName}'s highest Scryfall price is in ${correctPrinting.setName} at ${formatPrice(correctPrinting.price)}.`;
+  const winningPrice = getPrintingPrice(correctPrinting, correctFinish);
+  winMessage.textContent = `Correct! ${selectedCardName}'s highest Scryfall price is the ${formatFinish(correctFinish).toLowerCase()} printing in ${correctPrinting.setName} at ${formatPrice(winningPrice)}.`;
 
   if (correctPrinting.imageUrl) {
     winCardImage.src = correctPrinting.imageUrl;
@@ -423,33 +480,33 @@ function handleGuess() {
     return;
   }
 
-  if (guessedSetCodes.has(guessedSet.code)) {
-    guessStatus.textContent = "You already guessed that set.";
+  const guessedFinish = finishGuessInput.value === "foil" ? "foil" : "nonfoil";
+  const guessedKey = `${guessedSet.code}:${guessedFinish}`;
+
+  if (guessedPrintingKeys.has(guessedKey)) {
+    guessStatus.textContent = "You already guessed that set and finish.";
     setGuessInput.value = "";
     setGuessInput.dataset.selectedCode = "";
     setAutocomplete.innerHTML = "";
     return;
   }
 
-  guessedSetCodes.add(guessedSet.code);
+  guessedPrintingKeys.add(guessedKey);
 
   const printing = printingBySet.get(guessedSet.code);
-  const hasPrinting = Boolean(printing);
-  const price = printing ? printing.price : null;
-
-  addGuessRow(guessedSet, hasPrinting, price);
+  addGuessRow(guessedSet, guessedFinish, printing ?? null);
 
   setGuessInput.value = "";
   setGuessInput.dataset.selectedCode = "";
   setAutocomplete.innerHTML = "";
 
-  if (guessedSet.code === correctPrinting.setCode) {
+  if (guessedSet.code === correctPrinting.setCode && guessedFinish === correctFinish) {
     guessStatus.textContent = "Correct!";
     showWinModal();
     return;
   }
 
-  guessStatus.textContent = `${guessedSet.name} was not the highest-price printing.`;
+  guessStatus.textContent = `${guessedSet.name} ${formatFinish(guessedFinish).toLowerCase()} was not the highest-price printing.`;
 }
 
 async function setupGame() {
@@ -481,19 +538,40 @@ async function setupGame() {
   printingBySet.clear();
   for (const printing of printings) {
     const existing = printingBySet.get(printing.setCode);
-    if (!existing || printing.price > existing.price) {
-      printingBySet.set(printing.setCode, printing);
-    }
+    const merged: PrintingInfo = existing
+      ? {
+          ...existing,
+          imageUrl: existing.imageUrl ?? printing.imageUrl,
+          prices: {
+            nonfoil: maxPrice(existing.prices.nonfoil, printing.prices.nonfoil),
+            foil: maxPrice(existing.prices.foil, printing.prices.foil)
+          }
+        }
+      : printing;
+    printingBySet.set(printing.setCode, merged);
   }
 
   let highestPricePrinting: PrintingInfo | null = null;
+  let highestPriceFinish: Finish = "nonfoil";
+  let highestPrice = -1;
   for (const printing of printingBySet.values()) {
-    if (!highestPricePrinting || printing.price > highestPricePrinting.price) {
+    const nonfoilPrice = printing.prices.nonfoil;
+    if (nonfoilPrice !== null && nonfoilPrice > highestPrice) {
+      highestPrice = nonfoilPrice;
+      highestPriceFinish = "nonfoil";
+      highestPricePrinting = printing;
+    }
+
+    const foilPrice = printing.prices.foil;
+    if (foilPrice !== null && foilPrice > highestPrice) {
+      highestPrice = foilPrice;
+      highestPriceFinish = "foil";
       highestPricePrinting = printing;
     }
   }
 
   correctPrinting = highestPricePrinting;
+  correctFinish = highestPriceFinish;
   if (!correctPrinting) {
     throw new Error("Could not determine a correct answer.");
   }
