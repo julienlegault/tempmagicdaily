@@ -127,10 +127,6 @@ function getPrintingPrice(printing: PrintingInfo | null, finish: Finish): number
   return printing.prices[finish];
 }
 
-function getOverallPrintingPrice(printing: PrintingInfo): number {
-  return maxPrice(printing.prices.nonfoil, printing.prices.foil) ?? 0;
-}
-
 function formatFinish(finish: Finish): string {
   return finish === "foil" ? "Foil" : "Non-foil";
 }
@@ -401,7 +397,7 @@ function getGuessResultText(printing: PrintingInfo | null, finish: Finish): stri
     return formatPrice(price);
   }
 
-  return finish === "foil" ? "No foil printing" : "No non-foil printing";
+  return finish === "foil" ? "No foil printing" : "No printing";
 }
 
 function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null) {
