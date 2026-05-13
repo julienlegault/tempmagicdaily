@@ -34,29 +34,29 @@ h1 {
 }
 
 .card-frame {
-  --frame-pad-top: 3.98%;
-  --frame-pad-x: 5.1%;
-  --frame-pad-bottom: 10.57%;
+  --frame-padding-top: 3.98%;
+  --frame-padding-x: 5.1%;
+  --frame-padding-bottom: 10.57%;
   --row-name: minmax(0, 72fr);
-  --row-name-art-gap: minmax(0, 4fr);
+  --row-name-art-spacing: minmax(0, 4fr);
   --row-art: minmax(0, 490fr);
-  --row-art-type-gap: minmax(0, 10fr);
+  --row-art-type-spacing: minmax(0, 10fr);
   --row-type: minmax(0, 64fr);
-  --row-type-text-gap: minmax(0, 24fr);
+  --row-type-text-spacing: minmax(0, 24fr);
   --row-text: minmax(0, 282fr);
   position: relative;
   width: min(100%, 420px);
   aspect-ratio: 791 / 1107;
   margin: 16px auto 24px;
-  padding: var(--frame-pad-top) var(--frame-pad-x) var(--frame-pad-bottom);
+  padding: var(--frame-padding-top) var(--frame-padding-x) var(--frame-padding-bottom);
   display: grid;
   grid-template-rows:
     var(--row-name)
-    var(--row-name-art-gap)
+    var(--row-name-art-spacing)
     var(--row-art)
-    var(--row-art-type-gap)
+    var(--row-art-type-spacing)
     var(--row-type)
-    var(--row-type-text-gap)
+    var(--row-type-text-spacing)
     var(--row-text);
   row-gap: 0;
   background: url("./card-frame-border.jpg") center / cover no-repeat;
