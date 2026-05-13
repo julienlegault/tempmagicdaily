@@ -241,7 +241,7 @@ function formatPrice(value) {
     return `$${value.toFixed(2)}`;
 }
 function priceHeatColor(guessPrice, answerPrice) {
-    if (guessPrice === null) {
+    if (guessPrice == null) {
         return PRICE_COLOR_NO_DATA;
     }
     if (answerPrice <= 0) {
@@ -249,7 +249,7 @@ function priceHeatColor(guessPrice, answerPrice) {
             ? `rgb(${PRICE_COLOR_CLOSE.r}, ${PRICE_COLOR_CLOSE.g}, ${PRICE_COLOR_CLOSE.b})`
             : PRICE_COLOR_NO_DATA;
     }
-    const ratio = Math.abs(guessPrice - answerPrice) / answerPrice;
+    const ratio = Math.abs(guessPrice - answerPrice) / Math.max(answerPrice, Number.EPSILON);
     const clamped = Math.min(ratio / 0.5, 1);
     const r = Math.round(PRICE_COLOR_CLOSE.r + (PRICE_COLOR_FAR.r - PRICE_COLOR_CLOSE.r) * clamped);
     const g = Math.round(PRICE_COLOR_CLOSE.g + (PRICE_COLOR_FAR.g - PRICE_COLOR_CLOSE.g) * clamped);
@@ -322,7 +322,7 @@ function handleGuess() {
     guessedSetCodes.add(guessedSet.code);
     const printing = printingBySet.get(guessedSet.code);
     const hasPrinting = Boolean(printing);
-    const price = hasPrinting ? printing.price : null;
+    const price = printing ? printing.price : null;
     addGuessRow(guessedSet, hasPrinting, price);
     setGuessInput.value = "";
     setGuessInput.dataset.selectedCode = "";

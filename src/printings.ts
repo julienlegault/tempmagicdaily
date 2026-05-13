@@ -330,8 +330,8 @@ function formatPrice(value: number | null): string {
   return `$${value.toFixed(2)}`;
 }
 
-function priceHeatColor(guessPrice: number | null, answerPrice: number): string {
-  if (guessPrice === null) {
+function priceHeatColor(guessPrice: number | null | undefined, answerPrice: number): string {
+  if (guessPrice == null) {
     return PRICE_COLOR_NO_DATA;
   }
   if (answerPrice <= 0) {
@@ -340,7 +340,7 @@ function priceHeatColor(guessPrice: number | null, answerPrice: number): string 
       : PRICE_COLOR_NO_DATA;
   }
 
-  const ratio = Math.abs(guessPrice - answerPrice) / answerPrice;
+  const ratio = Math.abs(guessPrice - answerPrice) / Math.max(answerPrice, Number.EPSILON);
   const clamped = Math.min(ratio / 0.5, 1);
 
   const r = Math.round(PRICE_COLOR_CLOSE.r + (PRICE_COLOR_FAR.r - PRICE_COLOR_CLOSE.r) * clamped);
@@ -431,7 +431,7 @@ function handleGuess() {
 
   const printing = printingBySet.get(guessedSet.code);
   const hasPrinting = Boolean(printing);
-  const price = hasPrinting ? printing!.price : null;
+  const price = printing ? printing.price : null;
 
   addGuessRow(guessedSet, hasPrinting, price);
 
