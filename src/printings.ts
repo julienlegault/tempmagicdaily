@@ -95,8 +95,9 @@ function getDailyIndex(max: number) {
   for (const c of today) {
     seed += c.charCodeAt(0);
   }
-  const rand = seededRandom(seed);
-  return Math.floor(rand() * max);
+  //const rand = seededRandom(seed);
+  //return Math.floor(rand() * max);
+  return Math.floor(Math.random() * max);
 }
 
 function normalize(value: string): string {
