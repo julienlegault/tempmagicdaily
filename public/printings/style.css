@@ -36,13 +36,20 @@ h1 {
 .card-frame {
   position: relative;
   width: min(100%, 420px);
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 791 / 1107;
   margin: 16px auto 24px;
-  padding: 7.5% 7.5% 4.5%;
+  padding: 3.98% 5.1% 10.57%;
   display: grid;
-  grid-template-rows: minmax(0, 0.1fr) minmax(0, 0.49fr) minmax(0, 0.075fr) minmax(0, 0.335fr);
-  row-gap: 1.2%;
-  background: url("./card-frame-bg.svg") center / cover no-repeat;
+  grid-template-rows:
+    minmax(0, 72fr)
+    minmax(0, 4fr)
+    minmax(0, 490fr)
+    minmax(0, 10fr)
+    minmax(0, 64fr)
+    minmax(0, 24fr)
+    minmax(0, 282fr);
+  row-gap: 0;
+  background: url("./card-frame-border.jpg") center / cover no-repeat;
   color: #10161b;
   font-family: Georgia, "Times New Roman", serif;
 }
@@ -65,6 +72,7 @@ h1 {
 }
 
 .card-name-row {
+  grid-row: 1;
   padding: 0 18px;
   font-size: clamp(1rem, 2.8vw, 1.32rem);
   line-height: 1.15;
@@ -78,10 +86,12 @@ h1 {
 }
 
 .card-art-placeholder {
+  grid-row: 3;
   pointer-events: none;
 }
 
 .card-type-row {
+  grid-row: 5;
   padding: 0 18px;
   font-size: clamp(0.9rem, 2.2vw, 1.02rem);
   line-height: 1.2;
@@ -89,6 +99,7 @@ h1 {
 }
 
 .card-text-box {
+  grid-row: 7;
   padding: 18px 18px 16px;
   display: flex;
   flex-direction: column;
