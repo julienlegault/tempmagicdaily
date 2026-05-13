@@ -493,7 +493,9 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   setName.textContent = `${set.name} (${set.code.toUpperCase()})`;
   const finishCell = document.createElement("span");
   finishCell.className = "result-finish";
-  finishCell.textContent = formatFinish(finish);
+  finishCell.textContent = printing
+    ? `${formatFinish(finish)} • #${printing.collectorNumber}`
+    : formatFinish(finish);
   setCell.appendChild(setName);
   setCell.appendChild(finishCell);
 
