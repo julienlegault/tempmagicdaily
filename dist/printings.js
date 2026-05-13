@@ -16,10 +16,16 @@ let correctPrinting = null;
 let guessedSetCodes = new Set();
 let lastSetQuery = "";
 let lastSetResults = [];
+const RNG_MULTIPLIER = 9301;
+const RNG_INCREMENT = 49297;
+const RNG_MODULUS = 233280;
+const PRICE_COLOR_CLOSE = { r: 46, g: 204, b: 113 };
+const PRICE_COLOR_FAR = { r: 231, g: 76, b: 60 };
+const PRICE_COLOR_NO_DATA = "rgb(140, 65, 65)";
 function seededRandom(seed) {
     return () => {
-        seed = (seed * 9301 + 49297) % 233280;
-        return seed / 233280;
+        seed = (seed * RNG_MULTIPLIER + RNG_INCREMENT) % RNG_MODULUS;
+        return seed / RNG_MODULUS;
     };
 }
 function getDailyIndex(max) {
@@ -144,7 +150,8 @@ async function fetchAllSets() {
 }
 async function fetchAllPrintings(cardName) {
     const printings = [];
-    let nextPage = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(`!"${cardName}" unique:prints game:paper`)}`;
+    const query = `!"${cardName}" unique:prints game:paper`;
+    let nextPage = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}`;
     while (nextPage) {
         const response = await fetch(nextPage);
         if (!response.ok) {
@@ -235,22 +242,18 @@ function formatPrice(value) {
 }
 function priceHeatColor(guessPrice, answerPrice) {
     if (guessPrice === null) {
-        return "rgb(140, 65, 65)";
+        return PRICE_COLOR_NO_DATA;
     }
     if (answerPrice <= 0) {
-        return guessPrice <= 0 ? "rgb(46, 204, 113)" : "rgb(140, 65, 65)";
+        return guessPrice <= 0
+            ? `rgb(${PRICE_COLOR_CLOSE.r}, ${PRICE_COLOR_CLOSE.g}, ${PRICE_COLOR_CLOSE.b})`
+            : PRICE_COLOR_NO_DATA;
     }
     const ratio = Math.abs(guessPrice - answerPrice) / answerPrice;
     const clamped = Math.min(ratio / 0.5, 1);
-    const redStart = 46;
-    const greenStart = 204;
-    const blueStart = 113;
-    const redEnd = 231;
-    const greenEnd = 76;
-    const blueEnd = 60;
-    const r = Math.round(redStart + (redEnd - redStart) * clamped);
-    const g = Math.round(greenStart + (greenEnd - greenStart) * clamped);
-    const b = Math.round(blueStart + (blueEnd - blueStart) * clamped);
+    const r = Math.round(PRICE_COLOR_CLOSE.r + (PRICE_COLOR_FAR.r - PRICE_COLOR_CLOSE.r) * clamped);
+    const g = Math.round(PRICE_COLOR_CLOSE.g + (PRICE_COLOR_FAR.g - PRICE_COLOR_CLOSE.g) * clamped);
+    const b = Math.round(PRICE_COLOR_CLOSE.b + (PRICE_COLOR_FAR.b - PRICE_COLOR_CLOSE.b) * clamped);
     return `rgb(${r}, ${g}, ${b})`;
 }
 function addGuessRow(set, hasPrinting, price) {
