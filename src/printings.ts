@@ -306,7 +306,7 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
   const printings: PrintingInfo[] = [];
   const escapedCardName = cardName.replace(/[\"'\\]/g, "\\$&");
   const query = `!"${escapedCardName}" unique:prints game:paper`;
-  let nextPage = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}`;
+  let nextPage = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&include_extras=true&include_variations=true`;
 
   while (nextPage) {
     const response = await fetch(nextPage);
@@ -473,13 +473,11 @@ function getYearResultClass(set: SetInfo): string {
   return "";
 }
 
-function getPrintingOptionCaption(printing: PrintingInfo, finish: Finish): string {
-  const price = getPrintingPrice(printing, finish);
+function getPrintingOptionCaption(printing: PrintingInfo): string {
   const pieces = [`#${printing.collectorNumber}`];
   if (printing.releaseYear !== null) {
     pieces.push(String(printing.releaseYear));
   }
-  pieces.push(price === null ? (finish === "foil" ? "No foil price" : NO_PRINTING_TEXT) : formatPrice(price));
   return pieces.join(" • ");
 }
 
@@ -596,32 +594,13 @@ function openVersionPicker(guessedSet: SetInfo, guessedFinish: Finish, printings
   versionPickerTitle.textContent = `Choose ${selectedCardName} in ${guessedSet.name}`;
   versionPickerGrid.replaceChildren();
 
-  const sortedPrintings = printings
-    .map(printing => ({
-      printing,
-      price: getPrintingPrice(printing, guessedFinish)
-    }))
-    .sort((a, b) => {
-      const aPrice = a.price;
-      const bPrice = b.price;
-      const aCollectorNumber = a.printing.collectorNumber;
-      const bCollectorNumber = b.printing.collectorNumber;
-
-      if (aPrice === null && bPrice === null) {
-        return aCollectorNumber.localeCompare(bCollectorNumber, undefined, { numeric: true });
-      }
-      if (aPrice === null) {
-        return 1;
-      }
-      if (bPrice === null) {
-        return -1;
-      }
-      if (aPrice !== bPrice) {
-        return bPrice - aPrice;
-      }
-      return aCollectorNumber.localeCompare(bCollectorNumber, undefined, { numeric: true });
-    })
-    .map(item => item.printing);
+  const sortedPrintings = [...printings].sort((a, b) => {
+    const collectorNumberComparison = a.collectorNumber.localeCompare(b.collectorNumber, undefined, { numeric: true });
+    if (collectorNumberComparison !== 0) {
+      return collectorNumberComparison;
+    }
+    return a.id.localeCompare(b.id);
+  });
 
   for (const printing of sortedPrintings) {
     const option = document.createElement("button");
@@ -642,7 +621,7 @@ function openVersionPicker(guessedSet: SetInfo, guessedFinish: Finish, printings
 
     const caption = document.createElement("span");
     caption.className = "version-option-caption";
-    caption.textContent = getPrintingOptionCaption(printing, guessedFinish);
+    caption.textContent = getPrintingOptionCaption(printing);
     option.appendChild(caption);
 
     option.addEventListener("click", () => {
