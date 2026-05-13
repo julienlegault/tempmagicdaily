@@ -34,15 +34,32 @@ h1 {
 }
 
 .card-frame {
+  --frame-padding-top: 3.98%;
+  --frame-padding-x: 5.1%;
+  --frame-padding-bottom: 10.57%;
+  --row-name: minmax(0, 72fr);
+  --row-name-art-spacing: minmax(0, 4fr);
+  --row-art: minmax(0, 490fr);
+  --row-art-type-spacing: minmax(0, 10fr);
+  --row-type: minmax(0, 64fr);
+  --row-type-text-spacing: minmax(0, 24fr);
+  --row-text: minmax(0, 282fr);
   position: relative;
   width: min(100%, 420px);
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 791 / 1107;
   margin: 16px auto 24px;
-  padding: 7.5% 7.5% 4.5%;
+  padding: var(--frame-padding-top) var(--frame-padding-x) var(--frame-padding-bottom);
   display: grid;
-  grid-template-rows: minmax(0, 0.1fr) minmax(0, 0.49fr) minmax(0, 0.075fr) minmax(0, 0.335fr);
-  row-gap: 1.2%;
-  background: url("./card-frame-bg.svg") center / cover no-repeat;
+  grid-template-rows:
+    var(--row-name)
+    var(--row-name-art-spacing)
+    var(--row-art)
+    var(--row-art-type-spacing)
+    var(--row-type)
+    var(--row-type-text-spacing)
+    var(--row-text);
+  row-gap: 0;
+  background: url("./card-frame-border.jpg") center / cover no-repeat;
   color: #10161b;
   font-family: Georgia, "Times New Roman", serif;
 }
@@ -65,6 +82,7 @@ h1 {
 }
 
 .card-name-row {
+  grid-row: 1;
   padding: 0 18px;
   font-size: clamp(1rem, 2.8vw, 1.32rem);
   line-height: 1.15;
@@ -78,10 +96,12 @@ h1 {
 }
 
 .card-art-placeholder {
+  grid-row: 3;
   pointer-events: none;
 }
 
 .card-type-row {
+  grid-row: 5;
   padding: 0 18px;
   font-size: clamp(0.9rem, 2.2vw, 1.02rem);
   line-height: 1.2;
@@ -89,6 +109,7 @@ h1 {
 }
 
 .card-text-box {
+  grid-row: 7;
   padding: 18px 18px 16px;
   display: flex;
   flex-direction: column;
