@@ -5,18 +5,25 @@ type CardListItem = string;
 type SetInfo = {
   code: string;
   name: string;
+  releaseDate: string | null;
+  releaseYear: number | null;
 };
 
 type Finish = "nonfoil" | "foil";
 
 type PrintingInfo = {
+  id: string;
   setCode: string;
   setName: string;
   imageUrl: string | null;
+  collectorNumber: string;
+  releaseDate: string | null;
+  releaseYear: number | null;
   prices: Record<Finish, number | null>;
 };
 
 type ScryfallCard = {
+  id: string;
   name: string;
   mana_cost?: string;
   type_line: string;
@@ -27,6 +34,8 @@ type ScryfallCard = {
   defense?: string;
   set: string;
   set_name: string;
+  collector_number: string;
+  released_at?: string;
   prices: {
     usd: string | null;
     usd_foil: string | null;
@@ -66,14 +75,19 @@ const winModal = document.getElementById("winModal") as HTMLElement;
 const closeWinModal = document.getElementById("closeWinModal") as HTMLButtonElement;
 const winMessage = document.getElementById("winMessage") as HTMLElement;
 const winCardImage = document.getElementById("winCardImage") as HTMLImageElement;
+const versionPickerModal = document.getElementById("versionPickerModal") as HTMLElement;
+const closeVersionPickerModal = document.getElementById("closeVersionPickerModal") as HTMLButtonElement;
+const versionPickerTitle = document.getElementById("versionPickerTitle") as HTMLElement;
+const versionPickerGrid = document.getElementById("versionPickerGrid") as HTMLElement;
 
 let allSets: SetInfo[] = [];
 let selectedCardName = "";
 let selectedCard: ScryfallCard | null = null;
-let printingBySet = new Map<string, PrintingInfo>();
+let printingsBySet = new Map<string, PrintingInfo[]>();
 let correctPrinting: PrintingInfo | null = null;
 let correctFinish: Finish = "nonfoil";
 let correctAnswerKeys = new Set<string>();
+let correctSetCodes = new Set<string>();
 let guessedPrintingKeys = new Set<string>();
 let lastSetQuery = "";
 let lastSetResults: SetInfo[] = [];
@@ -116,6 +130,14 @@ function parsePrice(value: string | null): number | null {
   }
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseReleaseYear(value: string | undefined | null): number | null {
+  if (!value || value.length < 4) {
+    return null;
+  }
+  const year = Number.parseInt(value.slice(0, 4), 10);
+  return Number.isFinite(year) ? year : null;
 }
 
 function maxPrice(...values: Array<number | null>): number | null {
@@ -244,7 +266,12 @@ async function fetchAllSets(): Promise<SetInfo[]> {
     if (!response.ok) {
       throw new Error("Failed to load set list.");
     }
-    const payload = (await response.json()) as ScryfallList<{ code: string; name: string; set_type: string }>;
+    const payload = (await response.json()) as ScryfallList<{
+      code: string;
+      name: string;
+      set_type: string;
+      released_at?: string;
+    }>;
 
     for (const set of payload.data) {
       if (!set.code || !set.name) {
@@ -253,7 +280,13 @@ async function fetchAllSets(): Promise<SetInfo[]> {
       if (set.set_type === "memorabilia") {
         continue;
       }
-      sets.push({ code: set.code.toLowerCase(), name: set.name });
+      const releaseDate = set.released_at ?? null;
+      sets.push({
+        code: set.code.toLowerCase(),
+        name: set.name,
+        releaseDate,
+        releaseYear: parseReleaseYear(releaseDate)
+      });
     }
 
     nextPage = payload.has_more && payload.next_page ? payload.next_page : "";
@@ -286,9 +319,13 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
       const nonfoilPrice = parsePrice(card.prices.usd);
       const foilPrice = maxPrice(parsePrice(card.prices.usd_foil), parsePrice(card.prices.usd_etched));
       printings.push({
+        id: card.id,
         setCode: card.set.toLowerCase(),
         setName: card.set_name,
         imageUrl: getCardImage(card),
+        collectorNumber: card.collector_number,
+        releaseDate: card.released_at ?? null,
+        releaseYear: parseReleaseYear(card.released_at),
         prices: {
           nonfoil: nonfoilPrice,
           foil: foilPrice
@@ -408,6 +445,44 @@ function getGuessResultText(printing: PrintingInfo | null, finish: Finish): stri
   return finish === "foil" ? "No foil printing" : NO_PRINTING_TEXT;
 }
 
+function getGuessKey(setCode: string, finish: Finish, printing: PrintingInfo | null): string {
+  return printing ? `${printing.id}:${finish}` : `${setCode}:missing:${finish}`;
+}
+
+function getYearComparisonArrow(guessedYear: number | null, answerYear: number | null): string {
+  if (guessedYear === null || answerYear === null || guessedYear === answerYear) {
+    return "";
+  }
+  return answerYear > guessedYear ? " ↑" : " ↓";
+}
+
+function formatYearResult(set: SetInfo): string {
+  if (set.releaseYear === null) {
+    return "Unknown";
+  }
+  return `${set.releaseYear}${getYearComparisonArrow(set.releaseYear, correctPrinting?.releaseYear ?? null)}`;
+}
+
+function getYearResultClass(set: SetInfo): string {
+  if (correctSetCodes.has(set.code)) {
+    return "result-year-correct-set";
+  }
+  if (set.releaseYear !== null && set.releaseYear === (correctPrinting?.releaseYear ?? null)) {
+    return "result-year-correct";
+  }
+  return "";
+}
+
+function getPrintingOptionCaption(printing: PrintingInfo, finish: Finish): string {
+  const price = getPrintingPrice(printing, finish);
+  const pieces = [`#${printing.collectorNumber}`];
+  if (printing.releaseYear !== null) {
+    pieces.push(String(printing.releaseYear));
+  }
+  pieces.push(price === null ? (finish === "foil" ? "No foil price" : NO_PRINTING_TEXT) : formatPrice(price));
+  return pieces.join(" • ");
+}
+
 function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null) {
   const row = document.createElement("div");
   row.className = "result-item results-row";
@@ -418,7 +493,9 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   setName.textContent = `${set.name} (${set.code.toUpperCase()})`;
   const finishCell = document.createElement("span");
   finishCell.className = "result-finish";
-  finishCell.textContent = formatFinish(finish);
+  finishCell.textContent = printing
+    ? `${formatFinish(finish)} • #${printing.collectorNumber}`
+    : formatFinish(finish);
   setCell.appendChild(setName);
   setCell.appendChild(finishCell);
 
@@ -429,8 +506,17 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   priceCell.textContent = getGuessResultText(printing, finish);
   priceCell.style.backgroundColor = priceHeatColor(price, winningPrice);
 
+  const yearCell = document.createElement("span");
+  yearCell.className = "result-year";
+  yearCell.textContent = formatYearResult(set);
+  const yearClass = getYearResultClass(set);
+  if (yearClass) {
+    yearCell.classList.add(yearClass);
+  }
+
   row.appendChild(setCell);
   row.appendChild(priceCell);
+  row.appendChild(yearCell);
   resultsGrid.prepend(row);
 }
 
@@ -473,6 +559,103 @@ function findSelectedSet(): SetInfo | null {
   return best ?? null;
 }
 
+function clearSetGuess() {
+  setGuessInput.value = "";
+  setGuessInput.dataset.selectedCode = "";
+  setAutocomplete.innerHTML = "";
+}
+
+function closeVersionPicker() {
+  versionPickerGrid.replaceChildren();
+  versionPickerModal.classList.add("hidden");
+}
+
+function submitGuess(guessedSet: SetInfo, guessedFinish: Finish, printing: PrintingInfo | null) {
+  const guessedKey = getGuessKey(guessedSet.code, guessedFinish, printing);
+
+  if (guessedPrintingKeys.has(guessedKey)) {
+    guessStatus.textContent = "You already guessed that version and finish.";
+    clearSetGuess();
+    return;
+  }
+
+  guessedPrintingKeys.add(guessedKey);
+  addGuessRow(guessedSet, guessedFinish, printing);
+  clearSetGuess();
+
+  if (correctAnswerKeys.has(guessedKey) && printing) {
+    guessStatus.textContent = "Correct!";
+    showWinModal(printing, guessedFinish);
+    return;
+  }
+
+  guessStatus.textContent = `${guessedSet.name} ${formatFinish(guessedFinish).toLowerCase()} was not the highest-price printing.`;
+}
+
+function openVersionPicker(guessedSet: SetInfo, guessedFinish: Finish, printings: PrintingInfo[]) {
+  versionPickerTitle.textContent = `Choose ${selectedCardName} in ${guessedSet.name}`;
+  versionPickerGrid.replaceChildren();
+
+  const sortedPrintings = printings
+    .map(printing => ({
+      printing,
+      price: getPrintingPrice(printing, guessedFinish)
+    }))
+    .sort((a, b) => {
+      const aPrice = a.price;
+      const bPrice = b.price;
+      const aCollectorNumber = a.printing.collectorNumber;
+      const bCollectorNumber = b.printing.collectorNumber;
+
+      if (aPrice === null && bPrice === null) {
+        return aCollectorNumber.localeCompare(bCollectorNumber, undefined, { numeric: true });
+      }
+      if (aPrice === null) {
+        return 1;
+      }
+      if (bPrice === null) {
+        return -1;
+      }
+      if (aPrice !== bPrice) {
+        return bPrice - aPrice;
+      }
+      return aCollectorNumber.localeCompare(bCollectorNumber, undefined, { numeric: true });
+    })
+    .map(item => item.printing);
+
+  for (const printing of sortedPrintings) {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "version-option";
+
+    if (printing.imageUrl) {
+      const image = document.createElement("img");
+      image.src = printing.imageUrl;
+      image.alt = `${selectedCardName} from ${guessedSet.name} (#${printing.collectorNumber})`;
+      option.appendChild(image);
+    } else {
+      const fallback = document.createElement("div");
+      fallback.className = "version-option-fallback";
+      fallback.textContent = selectedCardName;
+      option.appendChild(fallback);
+    }
+
+    const caption = document.createElement("span");
+    caption.className = "version-option-caption";
+    caption.textContent = getPrintingOptionCaption(printing, guessedFinish);
+    option.appendChild(caption);
+
+    option.addEventListener("click", () => {
+      closeVersionPicker();
+      submitGuess(guessedSet, guessedFinish, printing);
+    });
+
+    versionPickerGrid.appendChild(option);
+  }
+
+  versionPickerModal.classList.remove("hidden");
+}
+
 function handleGuess() {
   if (!correctPrinting) {
     guessStatus.textContent = "Game is still loading.";
@@ -486,32 +669,15 @@ function handleGuess() {
   }
 
   const guessedFinish = getSelectedFinish();
-  const guessedKey = `${guessedSet.code}:${guessedFinish}`;
+  const printings = printingsBySet.get(guessedSet.code) ?? [];
 
-  if (guessedPrintingKeys.has(guessedKey)) {
-    guessStatus.textContent = "You already guessed that set and finish.";
-    setGuessInput.value = "";
-    setGuessInput.dataset.selectedCode = "";
-    setAutocomplete.innerHTML = "";
+  if (printings.length > 1) {
+    guessStatus.textContent = "Choose which version you want to guess.";
+    openVersionPicker(guessedSet, guessedFinish, printings);
     return;
   }
 
-  guessedPrintingKeys.add(guessedKey);
-
-  const printing = printingBySet.get(guessedSet.code);
-  addGuessRow(guessedSet, guessedFinish, printing ?? null);
-
-  setGuessInput.value = "";
-  setGuessInput.dataset.selectedCode = "";
-  setAutocomplete.innerHTML = "";
-
-  if (correctAnswerKeys.has(guessedKey) && printing) {
-    guessStatus.textContent = "Correct!";
-    showWinModal(printing, guessedFinish);
-    return;
-  }
-
-  guessStatus.textContent = `${guessedSet.name} ${formatFinish(guessedFinish).toLowerCase()} was not the highest-price printing.`;
+  submitGuess(guessedSet, guessedFinish, printings[0] ?? null);
 }
 
 async function setupGame() {
@@ -540,47 +706,47 @@ async function setupGame() {
     throw new Error("No printings found for today's card.");
   }
 
-  printingBySet.clear();
+  printingsBySet.clear();
   for (const printing of printings) {
-    const existing = printingBySet.get(printing.setCode);
-    const merged: PrintingInfo = existing
-      ? {
-          ...existing,
-          imageUrl: existing.imageUrl ?? printing.imageUrl,
-          prices: {
-            nonfoil: maxPrice(existing.prices.nonfoil, printing.prices.nonfoil),
-            foil: maxPrice(existing.prices.foil, printing.prices.foil)
-          }
-        }
-      : printing;
-    printingBySet.set(printing.setCode, merged);
+    const existing = printingsBySet.get(printing.setCode) ?? [];
+    existing.push(printing);
+    printingsBySet.set(printing.setCode, existing);
   }
 
   let highestPricePrinting: PrintingInfo | null = null;
   let highestPriceFinish: Finish = "nonfoil";
   let highestPrice = -1;
   correctAnswerKeys.clear();
-  for (const printing of printingBySet.values()) {
-    const nonfoilPrice = printing.prices.nonfoil;
-    if (nonfoilPrice !== null && nonfoilPrice > highestPrice) {
-      highestPrice = nonfoilPrice;
-      highestPriceFinish = "nonfoil";
-      highestPricePrinting = printing;
-      correctAnswerKeys.clear();
-      correctAnswerKeys.add(`${printing.setCode}:nonfoil`);
-    } else if (nonfoilPrice !== null && nonfoilPrice === highestPrice) {
-      correctAnswerKeys.add(`${printing.setCode}:nonfoil`);
-    }
+  correctSetCodes.clear();
+  for (const printingsInSet of printingsBySet.values()) {
+    for (const printing of printingsInSet) {
+      const nonfoilPrice = printing.prices.nonfoil;
+      if (nonfoilPrice !== null && nonfoilPrice > highestPrice) {
+        highestPrice = nonfoilPrice;
+        highestPriceFinish = "nonfoil";
+        highestPricePrinting = printing;
+        correctAnswerKeys.clear();
+        correctSetCodes.clear();
+        correctAnswerKeys.add(getGuessKey(printing.setCode, "nonfoil", printing));
+        correctSetCodes.add(printing.setCode);
+      } else if (nonfoilPrice !== null && nonfoilPrice === highestPrice) {
+        correctAnswerKeys.add(getGuessKey(printing.setCode, "nonfoil", printing));
+        correctSetCodes.add(printing.setCode);
+      }
 
-    const foilPrice = printing.prices.foil;
-    if (foilPrice !== null && foilPrice > highestPrice) {
-      highestPrice = foilPrice;
-      highestPriceFinish = "foil";
-      highestPricePrinting = printing;
-      correctAnswerKeys.clear();
-      correctAnswerKeys.add(`${printing.setCode}:foil`);
-    } else if (foilPrice !== null && foilPrice === highestPrice) {
-      correctAnswerKeys.add(`${printing.setCode}:foil`);
+      const foilPrice = printing.prices.foil;
+      if (foilPrice !== null && foilPrice > highestPrice) {
+        highestPrice = foilPrice;
+        highestPriceFinish = "foil";
+        highestPricePrinting = printing;
+        correctAnswerKeys.clear();
+        correctSetCodes.clear();
+        correctAnswerKeys.add(getGuessKey(printing.setCode, "foil", printing));
+        correctSetCodes.add(printing.setCode);
+      } else if (foilPrice !== null && foilPrice === highestPrice) {
+        correctAnswerKeys.add(getGuessKey(printing.setCode, "foil", printing));
+        correctSetCodes.add(printing.setCode);
+      }
     }
   }
 
@@ -612,9 +778,17 @@ closeWinModal.addEventListener("click", () => {
   winModal.classList.add("hidden");
 });
 
+closeVersionPickerModal.addEventListener("click", closeVersionPicker);
+
 winModal.addEventListener("click", event => {
   if (event.target === winModal) {
     winModal.classList.add("hidden");
+  }
+});
+
+versionPickerModal.addEventListener("click", event => {
+  if (event.target === versionPickerModal) {
+    closeVersionPicker();
   }
 });
 
