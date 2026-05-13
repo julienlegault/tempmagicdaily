@@ -34,20 +34,30 @@ h1 {
 }
 
 .card-frame {
+  --frame-pad-top: 3.98%;
+  --frame-pad-x: 5.1%;
+  --frame-pad-bottom: 10.57%;
+  --row-name: minmax(0, 72fr);
+  --row-name-art-gap: minmax(0, 4fr);
+  --row-art: minmax(0, 490fr);
+  --row-art-type-gap: minmax(0, 10fr);
+  --row-type: minmax(0, 64fr);
+  --row-type-text-gap: minmax(0, 24fr);
+  --row-text: minmax(0, 282fr);
   position: relative;
   width: min(100%, 420px);
   aspect-ratio: 791 / 1107;
   margin: 16px auto 24px;
-  padding: 3.98% 5.1% 10.57%;
+  padding: var(--frame-pad-top) var(--frame-pad-x) var(--frame-pad-bottom);
   display: grid;
   grid-template-rows:
-    minmax(0, 72fr)
-    minmax(0, 4fr)
-    minmax(0, 490fr)
-    minmax(0, 10fr)
-    minmax(0, 64fr)
-    minmax(0, 24fr)
-    minmax(0, 282fr);
+    var(--row-name)
+    var(--row-name-art-gap)
+    var(--row-art)
+    var(--row-art-type-gap)
+    var(--row-type)
+    var(--row-type-text-gap)
+    var(--row-text);
   row-gap: 0;
   background: url("./card-frame-border.jpg") center / cover no-repeat;
   color: #10161b;
