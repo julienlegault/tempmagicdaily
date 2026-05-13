@@ -596,23 +596,32 @@ function openVersionPicker(guessedSet: SetInfo, guessedFinish: Finish, printings
   versionPickerTitle.textContent = `Choose ${selectedCardName} in ${guessedSet.name}`;
   versionPickerGrid.replaceChildren();
 
-  const sortedPrintings = [...printings].sort((a, b) => {
-    const aPrice = getPrintingPrice(a, guessedFinish);
-    const bPrice = getPrintingPrice(b, guessedFinish);
-    if (aPrice === null && bPrice === null) {
-      return a.collectorNumber.localeCompare(b.collectorNumber, undefined, { numeric: true });
-    }
-    if (aPrice === null) {
-      return 1;
-    }
-    if (bPrice === null) {
-      return -1;
-    }
-    if (aPrice !== bPrice) {
-      return bPrice - aPrice;
-    }
-    return a.collectorNumber.localeCompare(b.collectorNumber, undefined, { numeric: true });
-  });
+  const sortedPrintings = printings
+    .map(printing => ({
+      printing,
+      price: getPrintingPrice(printing, guessedFinish)
+    }))
+    .sort((a, b) => {
+      const aPrice = a.price;
+      const bPrice = b.price;
+      const aCollectorNumber = a.printing.collectorNumber;
+      const bCollectorNumber = b.printing.collectorNumber;
+
+      if (aPrice === null && bPrice === null) {
+        return aCollectorNumber.localeCompare(bCollectorNumber, undefined, { numeric: true });
+      }
+      if (aPrice === null) {
+        return 1;
+      }
+      if (bPrice === null) {
+        return -1;
+      }
+      if (aPrice !== bPrice) {
+        return bPrice - aPrice;
+      }
+      return aCollectorNumber.localeCompare(bCollectorNumber, undefined, { numeric: true });
+    })
+    .map(item => item.printing);
 
   for (const printing of sortedPrintings) {
     const option = document.createElement("button");
