@@ -222,7 +222,7 @@ function renderCardFrame(card: ScryfallCard) {
   const showManaCost = clueLevel >= 1;
   const showTypeLineAndStats = clueLevel >= 2;
   const showOracleText = clueLevel >= 3;
-  const showArtCrop = clueLevel >= 4;
+  const revealArtCrop = clueLevel >= 4;
   const manaCost = getCardManaCost(card);
   const typeLine = getCardTypeLine(card);
   const oracleText = getCardOracle(card);
@@ -240,7 +240,7 @@ function renderCardFrame(card: ScryfallCard) {
 
   const artPlaceholder = document.createElement("div");
   artPlaceholder.className = "card-art-placeholder";
-  if (showArtCrop && correctPrinting?.artCropUrl) {
+  if (revealArtCrop && correctPrinting?.artCropUrl) {
     const artCrop = document.createElement("img");
     artCrop.className = "card-art-crop";
     artCrop.src = correctPrinting.artCropUrl;
