@@ -255,10 +255,10 @@ function renderCardFrame(card: ScryfallCard) {
   const type = document.createElement("span");
   type.textContent = showTypeLineAndStats ? typeLine : "";
   typeRow.appendChild(type);
+
   const statsEl = document.createElement("span");
   statsEl.className = "card-stats";
   statsEl.textContent = showTypeLineAndStats ? stats : "";
-  typeRow.appendChild(statsEl);
 
   const textBox = document.createElement("div");
   textBox.className = "card-text-box";
@@ -273,6 +273,7 @@ function renderCardFrame(card: ScryfallCard) {
   cardFrame.appendChild(artPlaceholder);
   cardFrame.appendChild(typeRow);
   cardFrame.appendChild(textBox);
+  cardFrame.appendChild(statsEl);
 }
 
 async function fetchAllSets(): Promise<SetInfo[]> {

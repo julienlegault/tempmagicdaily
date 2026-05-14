@@ -140,7 +140,9 @@ h1 {
 }
 
 .card-stats {
-  text-align: right;
+  position: absolute;
+  bottom: calc(var(--frame-padding-bottom) / 2);
+  right: var(--frame-padding-x);
   font-weight: 600;
   font-size: clamp(0.9rem, 2.2vw, 1rem);
 }
