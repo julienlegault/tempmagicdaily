@@ -15,6 +15,7 @@ type PrintingInfo = {
   id: string;
   setCode: string;
   setName: string;
+  artCropUrl: string | null;
   imageUrl: string | null;
   collectorNumber: string;
   releaseDate: string | null;
@@ -42,10 +43,12 @@ type ScryfallCard = {
     usd_etched: string | null;
   };
   image_uris?: {
+    art_crop?: string;
     normal?: string;
   };
   card_faces?: Array<{
     image_uris?: {
+      art_crop?: string;
       normal?: string;
     };
     oracle_text?: string;
@@ -165,6 +168,10 @@ function getCardImage(card: ScryfallCard): string | null {
   return card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal ?? null;
 }
 
+function getCardArtCrop(card: ScryfallCard): string | null {
+  return card.image_uris?.art_crop ?? card.card_faces?.[0]?.image_uris?.art_crop ?? null;
+}
+
 function getCardOracle(card: ScryfallCard): string {
   if (card.oracle_text) {
     return card.oracle_text;
@@ -211,6 +218,11 @@ function getCardStats(card: ScryfallCard): string {
 }
 
 function renderCardFrame(card: ScryfallCard) {
+  const clueLevel = guessedPrintingKeys.size;
+  const showManaCost = clueLevel >= 1;
+  const showTypeLineAndStats = clueLevel >= 2;
+  const showOracleText = clueLevel >= 3;
+  const revealArtCrop = clueLevel >= 4;
   const manaCost = getCardManaCost(card);
   const typeLine = getCardTypeLine(card);
   const oracleText = getCardOracle(card);
@@ -222,38 +234,44 @@ function renderCardFrame(card: ScryfallCard) {
   const name = document.createElement("span");
   name.textContent = card.name;
   const mana = document.createElement("span");
-  mana.textContent = manaCost;
+  mana.textContent = showManaCost ? manaCost : "";
   nameRow.appendChild(name);
   nameRow.appendChild(mana);
 
-  const oracle = document.createElement("p");
-  oracle.className = "card-oracle";
-  oracle.textContent = oracleText || "No rules text";
-
   const artPlaceholder = document.createElement("div");
   artPlaceholder.className = "card-art-placeholder";
-  artPlaceholder.setAttribute("aria-hidden", "true");
+  if (revealArtCrop && correctPrinting?.artCropUrl) {
+    const artCrop = document.createElement("img");
+    artCrop.className = "card-art-crop";
+    artCrop.src = correctPrinting.artCropUrl;
+    artCrop.alt = `${selectedCardName} art crop`;
+    artPlaceholder.appendChild(artCrop);
+  } else {
+    artPlaceholder.setAttribute("aria-hidden", "true");
+  }
 
   const typeRow = document.createElement("div");
   typeRow.className = "card-type-row";
   const type = document.createElement("span");
-  type.textContent = typeLine;
+  type.textContent = showTypeLineAndStats ? typeLine : "";
   typeRow.appendChild(type);
+  const statsEl = document.createElement("span");
+  statsEl.className = "card-stats";
+  statsEl.textContent = showTypeLineAndStats ? stats : "";
+  typeRow.appendChild(statsEl);
 
   const textBox = document.createElement("div");
   textBox.className = "card-text-box";
-  const statsRow = document.createElement("div");
-  statsRow.className = "card-text-stats";
-  const statsEl = document.createElement("span");
-  statsEl.className = "card-stats";
-  statsEl.textContent = stats;
-  statsRow.appendChild(statsEl);
+  if (showOracleText) {
+    const oracle = document.createElement("p");
+    oracle.className = "card-oracle";
+    oracle.textContent = oracleText || "No rules text";
+    textBox.appendChild(oracle);
+  }
 
   cardFrame.appendChild(nameRow);
   cardFrame.appendChild(artPlaceholder);
   cardFrame.appendChild(typeRow);
-  textBox.appendChild(oracle);
-  textBox.appendChild(statsRow);
   cardFrame.appendChild(textBox);
 }
 
@@ -322,6 +340,7 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
         id: card.id,
         setCode: card.set.toLowerCase(),
         setName: card.set_name,
+        artCropUrl: getCardArtCrop(card),
         imageUrl: getCardImage(card),
         collectorNumber: card.collector_number,
         releaseDate: card.released_at ?? null,
@@ -580,6 +599,9 @@ function submitGuess(guessedSet: SetInfo, guessedFinish: Finish, printing: Print
   guessedPrintingKeys.add(guessedKey);
   addGuessRow(guessedSet, guessedFinish, printing);
   clearSetGuess();
+  if (selectedCard) {
+    renderCardFrame(selectedCard);
+  }
 
   if (correctAnswerKeys.has(guessedKey) && printing) {
     guessStatus.textContent = "Correct!";
