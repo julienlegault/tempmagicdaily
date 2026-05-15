@@ -1,6 +1,7 @@
 export {};
 
 type CardListItem = string;
+type GameMode = "daily" | "practice";
 
 type SetInfo = {
   code: string;
@@ -83,6 +84,10 @@ const setAutocomplete = document.getElementById("setAutocomplete") as HTMLUListE
 const cardFrame = document.getElementById("cardFrame") as HTMLElement;
 const resultsGrid = document.getElementById("resultsGrid") as HTMLElement;
 const guessStatus = document.getElementById("guessStatus") as HTMLElement;
+const modeLanding = document.getElementById("modeLanding") as HTMLElement;
+const gameArea = document.getElementById("gameArea") as HTMLElement;
+const startDailyMode = document.getElementById("startDailyMode") as HTMLButtonElement;
+const startPracticeMode = document.getElementById("startPracticeMode") as HTMLButtonElement;
 const winModal = document.getElementById("winModal") as HTMLElement;
 const closeWinModal = document.getElementById("closeWinModal") as HTMLButtonElement;
 const winMessage = document.getElementById("winMessage") as HTMLElement;
@@ -127,9 +132,16 @@ function getDailyIndex(max: number) {
   for (const c of today) {
     seed += c.charCodeAt(0);
   }
-  //const rand = seededRandom(seed);
-  //return Math.floor(rand() * max);
+  const rand = seededRandom(seed);
+  return Math.floor(rand() * max);
+}
+
+function getPracticeIndex(max: number) {
   return Math.floor(Math.random() * max);
+}
+
+function getCardIndex(max: number, mode: GameMode) {
+  return mode === "daily" ? getDailyIndex(max) : getPracticeIndex(max);
 }
 
 function normalize(value: string): string {
@@ -774,7 +786,7 @@ function handleGuess() {
   submitGuess(guessedSet, guessedFinish, printings[0] ?? null);
 }
 
-async function setupGame() {
+async function setupGame(mode: GameMode) {
   const cardsResponse = await fetch("../formatted_card_list.json");
   if (!cardsResponse.ok) {
     throw new Error("Failed to load card list.");
@@ -785,7 +797,7 @@ async function setupGame() {
     throw new Error("Card list was empty.");
   }
 
-  selectedCardName = cards[getDailyIndex(cards.length)];
+  selectedCardName = cards[getCardIndex(cards.length, mode)];
 
   const cardResponse = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(selectedCardName)}`);
   if (!cardResponse.ok) {
@@ -854,6 +866,56 @@ async function setupGame() {
   guessStatus.textContent = "Start typing a set name or code to guess.";
 }
 
+function setLoadingState() {
+  cardFrame.replaceChildren();
+  const loading = document.createElement("p");
+  loading.className = "loading";
+  loading.textContent = "Loading card…";
+  cardFrame.appendChild(loading);
+}
+
+function resetGameState() {
+  selectedCardName = "";
+  selectedCard = null;
+  printingsBySet.clear();
+  correctPrinting = null;
+  correctFinish = "nonfoil";
+  correctAnswerKeys.clear();
+  correctSetCodes.clear();
+  guessedPrintingKeys.clear();
+  lastSetQuery = "";
+  lastSetResults = [];
+  clearSetGuess();
+  resultsGrid.replaceChildren();
+  guessStatus.textContent = "";
+  closeVersionPicker();
+  winModal.classList.add("hidden");
+}
+
+function showLanding() {
+  resetGameState();
+  gameArea.classList.add("hidden");
+  modeLanding.classList.remove("hidden");
+}
+
+async function startGame(mode: GameMode) {
+  resetGameState();
+  modeLanding.classList.add("hidden");
+  gameArea.classList.remove("hidden");
+  guessStatus.textContent = "Loading game data…";
+  setLoadingState();
+  try {
+    await setupGame(mode);
+  } catch (error) {
+    cardFrame.replaceChildren();
+    const loading = document.createElement("p");
+    loading.className = "loading";
+    loading.textContent = `Unable to load game data: ${(error as Error).message}`;
+    cardFrame.appendChild(loading);
+    guessStatus.textContent = "Please refresh and try again.";
+  }
+}
+
 setGuessInput.addEventListener("input", () => {
   setGuessInput.dataset.selectedCode = "";
   renderAutocomplete(setGuessInput.value);
@@ -869,14 +931,14 @@ setGuessInput.addEventListener("keydown", event => {
 setGuessButton.addEventListener("click", handleGuess);
 
 closeWinModal.addEventListener("click", () => {
-  winModal.classList.add("hidden");
+  showLanding();
 });
 
 closeVersionPickerModal.addEventListener("click", closeVersionPicker);
 
 winModal.addEventListener("click", event => {
   if (event.target === winModal) {
-    winModal.classList.add("hidden");
+    showLanding();
   }
 });
 
@@ -886,11 +948,12 @@ versionPickerModal.addEventListener("click", event => {
   }
 });
 
-setupGame().catch(error => {
-  cardFrame.replaceChildren();
-  const loading = document.createElement("p");
-  loading.className = "loading";
-  loading.textContent = `Unable to load game data: ${(error as Error).message}`;
-  cardFrame.appendChild(loading);
-  guessStatus.textContent = "Please refresh and try again.";
+startDailyMode.addEventListener("click", () => {
+  void startGame("daily");
 });
+
+startPracticeMode.addEventListener("click", () => {
+  void startGame("practice");
+});
+
+showLanding();

@@ -34,6 +34,15 @@ h1 {
   color: var(--muted);
 }
 
+.mode-landing {
+  margin: 16px 0 24px;
+}
+
+.mode-actions {
+  display: flex;
+  gap: 12px;
+}
+
 .card-frame {
   --frame-padding-top: 3.98%;
   --frame-padding-x: 5.1%;
@@ -409,6 +418,14 @@ button {
 }
 
 @media (max-width: 640px) {
+  .mode-actions {
+    flex-wrap: wrap;
+  }
+
+  .mode-actions button {
+    width: 100%;
+  }
+
   .guess-row {
     flex-wrap: wrap;
   }
