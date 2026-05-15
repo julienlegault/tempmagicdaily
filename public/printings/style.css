@@ -137,6 +137,7 @@ h1 {
 .card-text-box {
   grid-row: 7;
   padding: 2px 18px 16px;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
