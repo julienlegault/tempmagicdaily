@@ -137,6 +137,7 @@ h1 {
 .card-text-box {
   grid-row: 7;
   padding: 5px 18px 16px;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -168,9 +169,8 @@ h1 {
 }
 
 .card-stats {
-  position: absolute;
-  bottom: calc(var(--frame-padding-bottom) / 2);
-  right: var(--frame-padding-x);
+  margin-top: auto;
+  align-self: flex-end;
   font-weight: 600;
   font-size: clamp(0.9rem, 2.2vw, 1rem);
 }
