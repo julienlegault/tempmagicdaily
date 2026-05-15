@@ -5,6 +5,7 @@
   --text: #ececec;
   --muted: #b8bcc2;
   --border: #42474f;
+  --set-icon-filter: brightness(0) invert(1);
 }
 
 * {
@@ -152,7 +153,7 @@ h1 {
   width: 1em;
   vertical-align: middle;
   margin-right: 0.25em;
-  filter: brightness(0) invert(1);
+  filter: var(--set-icon-filter);
 }
 
 .card-stats {
