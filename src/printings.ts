@@ -225,6 +225,26 @@ function getCardStats(card: ScryfallCard): string {
   return "";
 }
 
+function renderWithSymbols(text: string, container: HTMLElement): void {
+  const parts = text.split(/(\{[^}]+\})/g);
+  for (const part of parts) {
+    const match = part.match(/^\{([^}]+)\}$/);
+    if (match) {
+      const symbol = match[1].toUpperCase();
+      const img = document.createElement("img");
+      img.src = `https://svgs.scryfall.io/card-symbols/${symbol}.svg`;
+      img.alt = `{${symbol}}`;
+      img.className = "card-symbol";
+      img.onerror = () => {
+        img.replaceWith(document.createTextNode(part));
+      };
+      container.appendChild(img);
+    } else {
+      container.appendChild(document.createTextNode(part));
+    }
+  }
+}
+
 function renderCardFrame(card: ScryfallCard) {
   const clueLevel = guessedPrintingKeys.size;
   const showManaCost = clueLevel >= 1;
@@ -242,7 +262,9 @@ function renderCardFrame(card: ScryfallCard) {
   const name = document.createElement("span");
   name.textContent = card.name;
   const mana = document.createElement("span");
-  mana.textContent = showManaCost ? manaCost : "";
+  if (showManaCost && manaCost) {
+    renderWithSymbols(manaCost, mana);
+  }
   nameRow.appendChild(name);
   nameRow.appendChild(mana);
 
@@ -273,7 +295,13 @@ function renderCardFrame(card: ScryfallCard) {
   if (showOracleText) {
     const oracle = document.createElement("p");
     oracle.className = "card-oracle";
-    oracle.textContent = oracleText || "No rules text";
+    const lines = (oracleText || "No rules text").split("\n");
+    lines.forEach((line, i) => {
+      if (i > 0) {
+        oracle.appendChild(document.createElement("br"));
+      }
+      renderWithSymbols(line, oracle);
+    });
     textBox.appendChild(oracle);
   }
 
