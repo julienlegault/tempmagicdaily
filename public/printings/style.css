@@ -287,6 +287,8 @@ button {
 .result-set {
   min-width: 0;
   overflow-wrap: anywhere;
+  border-radius: 6px;
+  padding: 6px;
 }
 
 .result-set-correct {
@@ -303,6 +305,8 @@ button {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 0.88rem;
+  border-radius: 6px;
+  padding: 6px;
 }
 
 .result-number-correct {
