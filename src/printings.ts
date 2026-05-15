@@ -317,12 +317,12 @@ function renderCardFrame(card: ScryfallCard) {
     });
     textBox.appendChild(oracle);
   }
+  textBox.appendChild(statsEl);
 
   cardFrame.appendChild(nameRow);
   cardFrame.appendChild(artPlaceholder);
   cardFrame.appendChild(typeRow);
   cardFrame.appendChild(textBox);
-  cardFrame.appendChild(statsEl);
 }
 
 async function fetchAllSets(): Promise<SetInfo[]> {
