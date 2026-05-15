@@ -5,6 +5,7 @@ type CardListItem = string;
 type SetInfo = {
   code: string;
   name: string;
+  iconSvgUri: string | null;
   releaseDate: string | null;
   releaseYear: number | null;
 };
@@ -326,6 +327,7 @@ async function fetchAllSets(): Promise<SetInfo[]> {
       name: string;
       set_type: string;
       released_at?: string;
+      icon_svg_uri?: string;
     }>;
 
     for (const set of payload.data) {
@@ -339,6 +341,7 @@ async function fetchAllSets(): Promise<SetInfo[]> {
       sets.push({
         code: set.code.toLowerCase(),
         name: set.name,
+        iconSvgUri: set.icon_svg_uri ?? null,
         releaseDate,
         releaseYear: parseReleaseYear(releaseDate)
       });
@@ -449,6 +452,26 @@ function rankSets(query: string, limit: number): SetInfo[] {
   return ranked.slice(0, limit);
 }
 
+function createSetIcon(iconSvgUri: string | null): HTMLImageElement | null {
+  if (!iconSvgUri) {
+    return null;
+  }
+  const img = document.createElement("img");
+  img.src = iconSvgUri;
+  img.alt = "";
+  img.className = "set-icon";
+  return img;
+}
+
+function appendSetNameNodes(parent: Node, iconSvgUri: string | null, name: string, code?: string): void {
+  const icon = createSetIcon(iconSvgUri);
+  if (icon) {
+    parent.appendChild(icon);
+    parent.appendChild(document.createTextNode(" "));
+  }
+  parent.appendChild(document.createTextNode(code ? `${name} (${code.toUpperCase()})` : name));
+}
+
 function renderAutocomplete(query: string) {
   setAutocomplete.innerHTML = "";
   if (!query.trim()) {
@@ -458,7 +481,7 @@ function renderAutocomplete(query: string) {
   const suggestions = rankSets(query, 12);
   for (const set of suggestions) {
     const item = document.createElement("li");
-    item.textContent = `${set.name} (${set.code.toUpperCase()})`;
+    appendSetNameNodes(item, set.iconSvgUri, set.name, set.code);
     item.onclick = () => {
       setGuessInput.value = set.name;
       setGuessInput.dataset.selectedCode = set.code;
@@ -561,7 +584,7 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
 
   const setCell = document.createElement("div");
   setCell.className = `result-set ${isSetCorrect ? "result-set-correct" : "result-set-incorrect"}`;
-  setCell.textContent = `${set.name} (${set.code.toUpperCase()})`;
+  appendSetNameNodes(setCell, set.iconSvgUri, set.name, set.code);
 
   const numberCell = document.createElement("div");
   numberCell.className = `result-number ${isPrintingCorrect ? "result-number-correct" : "result-number-incorrect"}`;
@@ -605,7 +628,11 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
     return;
   }
 
-  winMessage.textContent = `Correct! ${selectedCardName}'s highest Scryfall price is the ${formatFinish(finish).toLowerCase()} printing in ${printing.setName} at ${formatPrice(winningPrice)}.`;
+  winMessage.replaceChildren();
+  winMessage.appendChild(document.createTextNode(`Correct! ${selectedCardName}'s highest Scryfall price is the ${formatFinish(finish).toLowerCase()} printing in `));
+  const winSet = allSets.find(s => s.code === printing.setCode);
+  appendSetNameNodes(winMessage, winSet?.iconSvgUri ?? null, printing.setName);
+  winMessage.appendChild(document.createTextNode(` at ${formatPrice(winningPrice)}.`));
 
   if (printing.imageUrl) {
     winCardImage.src = printing.imageUrl;
@@ -671,11 +698,15 @@ function submitGuess(guessedSet: SetInfo, guessedFinish: Finish, printing: Print
     return;
   }
 
-  guessStatus.textContent = `${guessedSet.name} ${formatFinish(guessedFinish).toLowerCase()} was not the highest-price printing.`;
+  guessStatus.replaceChildren();
+  appendSetNameNodes(guessStatus, guessedSet.iconSvgUri, guessedSet.name);
+  guessStatus.appendChild(document.createTextNode(` ${formatFinish(guessedFinish).toLowerCase()} was not the highest-price printing.`));
 }
 
 function openVersionPicker(guessedSet: SetInfo, guessedFinish: Finish, printings: PrintingInfo[]) {
-  versionPickerTitle.textContent = `Choose ${selectedCardName} in ${guessedSet.name}`;
+  versionPickerTitle.replaceChildren();
+  versionPickerTitle.appendChild(document.createTextNode(`Choose ${selectedCardName} in `));
+  appendSetNameNodes(versionPickerTitle, guessedSet.iconSvgUri, guessedSet.name);
   versionPickerGrid.replaceChildren();
 
   const sortedPrintings = [...printings].sort((a, b) => {

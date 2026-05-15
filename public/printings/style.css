@@ -146,6 +146,15 @@ h1 {
   margin: 0 0.05em;
 }
 
+.set-icon {
+  display: inline-block;
+  height: 1em;
+  width: 1em;
+  vertical-align: middle;
+  margin-right: 0.25em;
+  filter: brightness(0) invert(1);
+}
+
 .card-stats {
   position: absolute;
   bottom: calc(var(--frame-padding-bottom) / 2);
