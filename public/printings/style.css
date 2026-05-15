@@ -218,7 +218,7 @@ button {
 
 .results-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.8fr) minmax(140px, 1fr) minmax(96px, 0.7fr);
+  grid-template-columns: 2fr 1fr 0.8fr 0.6fr;
   gap: 8px;
   align-items: center;
 }
@@ -252,25 +252,46 @@ button {
   background: #171a1d;
 }
 
-.result-year-correct {
+.result-year-close {
   background: #c9a227;
   color: #10161b;
 }
 
-.result-year-correct-set {
+.result-year-exact {
   background: #2ecc71;
   color: #10161b;
 }
 
-.result-guess {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.result-year-far {
+  background: #7d2020;
+  color: #ececec;
 }
 
-.result-finish {
+.result-set {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.result-set-correct {
+  color: #2ecc71;
+}
+
+.result-set-incorrect {
+  color: #e74c3c;
+}
+
+.result-number {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 0.88rem;
-  color: var(--muted);
+}
+
+.result-number-correct {
+  color: #2ecc71;
+}
+
+.result-number-incorrect {
+  color: #e74c3c;
 }
 
 .modal {
@@ -374,6 +395,7 @@ button {
   }
 
   .results-row {
-    grid-template-columns: 1fr;
+    font-size: 0.82rem;
+    gap: 4px;
   }
 }
