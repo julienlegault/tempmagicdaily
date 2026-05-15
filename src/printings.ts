@@ -21,6 +21,7 @@ type PrintingInfo = {
   releaseDate: string | null;
   releaseYear: number | null;
   prices: Record<Finish, number | null>;
+  modifiers: string[];
 };
 
 type ScryfallCard = {
@@ -59,6 +60,13 @@ type ScryfallCard = {
     loyalty?: string;
     defense?: string;
   }>;
+  frame_effects?: string[];
+  border_color?: string;
+  finishes?: string[];
+  full_art?: boolean;
+  textless?: boolean;
+  promo?: boolean;
+  promo_types?: string[];
 };
 
 type ScryfallList<T> = {
@@ -337,6 +345,13 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
     for (const card of payload.data) {
       const nonfoilPrice = parsePrice(card.prices.usd);
       const foilPrice = maxPrice(parsePrice(card.prices.usd_foil), parsePrice(card.prices.usd_etched));
+      const modifiers: string[] = [];
+      if (card.border_color === "borderless") modifiers.push("Borderless");
+      if (card.frame_effects?.includes("extendedart")) modifiers.push("Extended Art");
+      if (card.frame_effects?.includes("showcase")) modifiers.push("Showcase");
+      if (card.full_art) modifiers.push("Full Art");
+      if (card.textless) modifiers.push("Textless");
+      if (card.finishes?.includes("etched")) modifiers.push("Etched");
       printings.push({
         id: card.id,
         setCode: card.set.toLowerCase(),
@@ -349,7 +364,8 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
         prices: {
           nonfoil: nonfoilPrice,
           foil: foilPrice
-        }
+        },
+        modifiers
       });
     }
 
@@ -484,13 +500,19 @@ function formatYearResult(set: SetInfo): string {
 }
 
 function getYearResultClass(set: SetInfo): string {
-  if (correctSetCodes.has(set.code)) {
-    return "result-year-correct-set";
+  const guessedYear = set.releaseYear;
+  const answerYear = correctPrinting?.releaseYear ?? null;
+  if (guessedYear === null || answerYear === null) {
+    return "";
   }
-  if (set.releaseYear !== null && set.releaseYear === (correctPrinting?.releaseYear ?? null)) {
-    return "result-year-correct";
+  const diff = Math.abs(guessedYear - answerYear);
+  if (diff === 0) {
+    return "result-year-exact";
   }
-  return "";
+  if (diff <= 2) {
+    return "result-year-close";
+  }
+  return "result-year-far";
 }
 
 function getPrintingOptionCaption(printing: PrintingInfo): string {
@@ -505,17 +527,27 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   const row = document.createElement("div");
   row.className = "result-item results-row";
 
+  const guessedKey = getGuessKey(set.code, finish, printing);
+  const isSetCorrect = correctSetCodes.has(set.code);
+  const isPrintingCorrect = printing !== null && correctAnswerKeys.has(guessedKey);
+
   const setCell = document.createElement("div");
-  setCell.className = "result-guess";
-  const setName = document.createElement("span");
-  setName.textContent = `${set.name} (${set.code.toUpperCase()})`;
-  const finishCell = document.createElement("span");
-  finishCell.className = "result-finish";
-  finishCell.textContent = printing
-    ? `${formatFinish(finish)} • #${printing.collectorNumber}`
-    : formatFinish(finish);
-  setCell.appendChild(setName);
-  setCell.appendChild(finishCell);
+  setCell.className = `result-set ${isSetCorrect ? "result-set-correct" : "result-set-incorrect"}`;
+  setCell.textContent = `${set.name} (${set.code.toUpperCase()})`;
+
+  const numberCell = document.createElement("div");
+  numberCell.className = `result-number ${isPrintingCorrect ? "result-number-correct" : "result-number-incorrect"}`;
+  const variantParts: string[] = [];
+  if (printing) {
+    variantParts.push(`#${printing.collectorNumber}`);
+    variantParts.push(formatFinish(finish));
+    variantParts.push(...printing.modifiers);
+  } else {
+    // Occurs when a set has no paper printing for this card (e.g. digital-only or missing data)
+    variantParts.push(formatFinish(finish));
+    variantParts.push("No printing");
+  }
+  numberCell.textContent = variantParts.join(" • ");
 
   const priceCell = document.createElement("span");
   priceCell.className = "result-price";
@@ -533,6 +565,7 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   }
 
   row.appendChild(setCell);
+  row.appendChild(numberCell);
   row.appendChild(priceCell);
   row.appendChild(yearCell);
   resultsGrid.prepend(row);
