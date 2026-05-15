@@ -69,6 +69,7 @@ h1 {
     var(--row-type-text-spacing)
     var(--row-text);
   row-gap: 0;
+  border-radius: 7px;
   background: url("./card-frame-border.jpg") center / cover no-repeat;
   color: #10161b;
   font-family: Georgia, "Times New Roman", serif;
@@ -96,7 +97,7 @@ h1 {
 
 .card-name-row {
   grid-row: 1;
-  padding: 5px 18px 0;
+  padding: 15px 18px 0;
   font-size: clamp(1rem, 2.8vw, 1.32rem);
   line-height: 1.15;
   align-self: center;
@@ -122,11 +123,12 @@ h1 {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  margin: 0 30px;
 }
 
 .card-type-row {
   grid-row: 4;
-  padding: 15px 18px 0;
+  padding: 17px 18px 0;
   font-size: clamp(0.9rem, 2.2vw, 1.02rem);
   line-height: 1.2;
   align-self: center;
@@ -134,7 +136,7 @@ h1 {
 
 .card-text-box {
   grid-row: 7;
-  padding: 18px 18px 16px;
+  padding: 5px 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -428,12 +430,6 @@ button {
 
   .guess-row {
     flex-wrap: wrap;
-  }
-
-  input,
-  select,
-  button {
-    width: 100%;
   }
 
   .results-row {
