@@ -280,11 +280,13 @@ button {
 }
 
 .result-set-correct {
-  color: #2ecc71;
+  background: #2ecc71;
+  color: #10161b;
 }
 
 .result-set-incorrect {
-  color: #e74c3c;
+  background: #7d2020;
+  color: #ececec;
 }
 
 .result-number {
@@ -294,11 +296,13 @@ button {
 }
 
 .result-number-correct {
-  color: #2ecc71;
+  background: #2ecc71;
+  color: #10161b;
 }
 
 .result-number-incorrect {
-  color: #e74c3c;
+  background: #7d2020;
+  color: #ececec;
 }
 
 .modal {
