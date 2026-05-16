@@ -8,13 +8,21 @@
 </head>
 <body>
   <main class="page">
-    <h1>MTG Printings</h1>
+    <h1 class="menu-title">MTG Printings</h1>
     <section id="modeLanding" class="mode-landing">
-      <p class="subtitle">Choose a mode to start.</p>
       <div class="mode-actions">
-        <button id="startDailyMode">Daily</button>
+        <button id="startDailyMode">Play Daily</button>
         <button id="startPracticeMode">Practice</button>
       </div>
+      <section class="how-to-play menu-how-to-play" aria-label="How to play">
+        <h2>How to Play</h2>
+        <p>Goal: find the exact printing including foiling with the highest TCGPlayer price for the shown card.</p>
+        <ul>
+          <li><strong>Set</strong> and <strong># / Variant</strong>: <span role="img" aria-label="Green square">🟩</span> green means correct, <span role="img" aria-label="Red square">🟥</span> red means incorrect.</li>
+          <li><strong>Price</strong>: <span role="img" aria-label="Green square">🟩</span> green is closest, then <span role="img" aria-label="Yellow square">🟨</span> yellow/<span role="img" aria-label="Orange square">🟧</span> orange, and <span role="img" aria-label="Red square">🟥</span> red is farthest (or no data).</li>
+          <li><strong>Year</strong>: <span role="img" aria-label="Green square">🟩</span> green is exact, <span role="img" aria-label="Yellow square">🟨</span> yellow is within 2 years, <span role="img" aria-label="Red square">🟥</span> red is farther.</li>
+        </ul>
+      </section>
     </section>
 
     <div id="gameArea" class="hidden">
@@ -47,15 +55,6 @@
         <div id="resultsGrid"></div>
       </section>
 
-      <section class="how-to-play" aria-label="How to play">
-        <h2>How to play</h2>
-        <p>Goal: find the exact printing including foiling with the highest TCGPlayer price for the shown card.</p>
-        <ul>
-          <li><strong>Set</strong> and <strong># / Variant</strong>: <span role="img" aria-label="Green square">🟩</span> green means correct, <span role="img" aria-label="Red square">🟥</span> red means incorrect.</li>
-          <li><strong>Price</strong>: <span role="img" aria-label="Green square">🟩</span> green is closest, then <span role="img" aria-label="Yellow square">🟨</span> yellow/<span role="img" aria-label="Orange square">🟧</span> orange, and <span role="img" aria-label="Red square">🟥</span> red is farthest (or no data).</li>
-          <li><strong>Year</strong>: <span role="img" aria-label="Green square">🟩</span> green is exact, <span role="img" aria-label="Yellow square">🟨</span> yellow is within 2 years, <span role="img" aria-label="Red square">🟥</span> red is farther.</li>
-        </ul>
-      </section>
     </div>
   </main>
 

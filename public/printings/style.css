@@ -1,10 +1,14 @@
 :root {
   color-scheme: dark;
-  --bg: #1f2225;
-  --panel: #2b2f34;
-  --text: #ececec;
-  --muted: #b8bcc2;
-  --border: #42474f;
+  --bg: #090b11;
+  --panel: #141920;
+  --text: #f0f2f5;
+  --muted: #c6ccd7;
+  --border: #303847;
+  --accent-green: #6aa84f;
+  --accent-orange: #ff4b06;
+  --menu-help-gap-desktop: 220px;
+  --menu-help-gap-mobile: 140px;
   --set-icon-filter: brightness(0) invert(1);
 }
 
@@ -21,26 +25,42 @@ body {
 
 .page {
   max-width: 760px;
-  margin: 24px auto;
+  margin: 20px auto;
   padding: 0 16px 30px;
 }
 
-h1 {
-  margin-bottom: 4px;
-}
-
-.subtitle {
-  margin-top: 0;
-  color: var(--muted);
+.menu-title {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: clamp(2.4rem, 8vw, 4.6rem);
+  line-height: 1.05;
 }
 
 .mode-landing {
-  margin: 16px 0 24px;
+  margin: 24px 0 24px;
 }
 
 .mode-actions {
   display: flex;
-  gap: 12px;
+  gap: 24px;
+  justify-content: center;
+}
+
+.mode-actions button {
+  min-width: min(100%, 320px);
+  padding: 24px 28px;
+  font-size: clamp(1.65rem, 5vw, 3rem);
+  border-radius: 14px;
+  border: 0;
+  line-height: 1;
+}
+
+#startDailyMode {
+  background: var(--accent-green);
+}
+
+#startPracticeMode {
+  background: var(--accent-orange);
 }
 
 .card-frame {
@@ -283,11 +303,15 @@ select {
 
 button {
   padding: 10px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: #3e454e;
+  background: var(--accent-orange);
   color: var(--text);
   cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.05);
 }
 
 .autocomplete {
@@ -324,21 +348,26 @@ button {
 }
 
 .how-to-play {
-  margin-top: 24px;
+  margin-top: 34px;
   padding: 14px 16px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
 
+.menu-how-to-play {
+  margin-top: var(--menu-help-gap-desktop);
+}
+
 .how-to-play h2 {
   margin: 0 0 8px;
-  font-size: 1.1rem;
+  font-size: 2.1rem;
+  text-align: center;
 }
 
 .how-to-play p {
   margin: 0 0 8px;
-  color: var(--muted);
+  color: var(--text);
 }
 
 .how-to-play ul {
@@ -390,7 +419,7 @@ button {
 }
 
 .result-year-exact {
-  background: #2ecc71;
+  background: #6aa84f;
   color: #10161b;
 }
 
@@ -407,12 +436,12 @@ button {
 }
 
 .result-set-correct {
-  background: #2ecc71;
+  background: #6aa84f;
   color: #10161b;
 }
 
 .result-set-incorrect {
-  background: #7d2020;
+  background: #8b2d12;
   color: #ececec;
 }
 
@@ -425,12 +454,12 @@ button {
 }
 
 .result-number-correct {
-  background: #2ecc71;
+  background: #6aa84f;
   color: #10161b;
 }
 
 .result-number-incorrect {
-  background: #7d2020;
+  background: #8b2d12;
   color: #ececec;
 }
 
@@ -485,7 +514,7 @@ button {
   gap: 8px;
   align-items: stretch;
   padding: 10px;
-  background: #262a30;
+  background: #1e242d;
 }
 
 .version-option img,
@@ -526,10 +555,16 @@ button {
 @media (max-width: 640px) {
   .mode-actions {
     flex-wrap: wrap;
+    gap: 14px;
   }
 
   .mode-actions button {
     width: 100%;
+    font-size: 2.2rem;
+  }
+
+  .menu-how-to-play {
+    margin-top: var(--menu-help-gap-mobile);
   }
 
   .guess-row {
