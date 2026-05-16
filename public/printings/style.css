@@ -558,11 +558,6 @@ button:hover {
     gap: 14px;
   }
 
-  .mode-actions button {
-    width: 100%;
-    font-size: 2.2rem;
-  }
-
   .menu-how-to-play {
     margin-top: var(--menu-help-gap-mobile);
   }
