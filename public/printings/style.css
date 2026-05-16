@@ -316,7 +316,7 @@ button {
   padding: 10px 20px;
   border: 1px solid transparent;
   border-radius: 5px;
-  background: var(--accent-orange);
+  background: var(--accent-green);
   color: var(--text);
   cursor: pointer;
   transition: background-color 0.3s;
