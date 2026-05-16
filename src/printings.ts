@@ -115,6 +115,7 @@ let lastSetQuery = "";
 let lastSetResults: SetInfo[] = [];
 let shareRows: string[] = [];
 let currentMode: GameMode = "practice";
+let timelineSetIndexByCode = new Map<string, number>();
 
 const RNG_MULTIPLIER = 9301;
 const RNG_INCREMENT = 49297;
@@ -566,6 +567,7 @@ function getSetSymbolLabel(set: SetInfo): string {
 
 function renderSetTimeline() {
   setTimeline.replaceChildren();
+  timelineSetIndexByCode.clear();
 
   const timelineSets = [...allSets].sort((a, b) => {
     if (!a.releaseDate) return 1;
@@ -573,7 +575,7 @@ function renderSetTimeline() {
     return a.releaseDate.localeCompare(b.releaseDate);
   });
 
-  for (const set of timelineSets) {
+  timelineSets.forEach((set, index) => {
     const item = document.createElement("div");
     item.className = "timeline-set-item";
     item.dataset.setCode = set.code;
@@ -595,9 +597,35 @@ function renderSetTimeline() {
     }
 
     setTimeline.appendChild(item);
-  }
+    timelineSetIndexByCode.set(set.code, index);
+  });
 
   setTimeline.classList.remove("hidden");
+}
+
+function getTimelineHintDirection(setCode: string): "timeline-set-hint-left" | "timeline-set-hint-right" | null {
+  const guessedIndex = timelineSetIndexByCode.get(setCode);
+  if (guessedIndex === undefined || correctSetCodes.has(setCode)) {
+    return null;
+  }
+
+  let nearestDelta: number | null = null;
+  for (const correctSetCode of correctSetCodes) {
+    const correctIndex = timelineSetIndexByCode.get(correctSetCode);
+    if (correctIndex === undefined) {
+      continue;
+    }
+    const delta = correctIndex - guessedIndex;
+    if (nearestDelta === null || Math.abs(delta) < Math.abs(nearestDelta)) {
+      nearestDelta = delta;
+    }
+  }
+
+  if (nearestDelta === null) {
+    return null;
+  }
+
+  return nearestDelta < 0 ? "timeline-set-hint-left" : "timeline-set-hint-right";
 }
 
 function updateSetTimelineItem(setCode: string, isCorrect: boolean) {
@@ -605,10 +633,22 @@ function updateSetTimelineItem(setCode: string, isCorrect: boolean) {
   if (!item) {
     return;
   }
-  if (!item.classList.contains("timeline-set-correct")) {
-    item.classList.toggle("timeline-set-correct", isCorrect);
-    item.classList.toggle("timeline-set-incorrect", !isCorrect);
+  if (isCorrect) {
+    item.classList.add("timeline-set-correct");
+    item.classList.remove("timeline-set-incorrect");
+  } else {
+    item.classList.add("timeline-set-incorrect");
+    item.classList.remove("timeline-set-correct");
   }
+  item.classList.remove("timeline-set-hint-left", "timeline-set-hint-right");
+
+  if (!isCorrect) {
+    const directionClass = getTimelineHintDirection(setCode);
+    if (directionClass) {
+      item.classList.add(directionClass);
+    }
+  }
+
   item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
 }
 
@@ -1069,6 +1109,7 @@ function resetGameState() {
   lastSetQuery = "";
   lastSetResults = [];
   shareRows = [];
+  timelineSetIndexByCode.clear();
   clearSetGuess();
   resultsGrid.replaceChildren();
   setTimeline.replaceChildren();
