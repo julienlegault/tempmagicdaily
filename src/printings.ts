@@ -79,6 +79,7 @@ const finishGuessInput = document.getElementById("finishGuessInput") as HTMLSele
 const setGuessButton = document.getElementById("setGuessButton") as HTMLButtonElement;
 const setAutocomplete = document.getElementById("setAutocomplete") as HTMLUListElement;
 const cardFrame = document.getElementById("cardFrame") as HTMLElement;
+const setTimeline = document.getElementById("setTimeline") as HTMLElement;
 const resultsGrid = document.getElementById("resultsGrid") as HTMLElement;
 const guessStatus = document.getElementById("guessStatus") as HTMLElement;
 const modeLanding = document.getElementById("modeLanding") as HTMLElement;
@@ -458,6 +459,63 @@ function createSetIcon(iconSvgUri: string | null): HTMLImageElement | null {
   return img;
 }
 
+function renderSetTimeline() {
+  setTimeline.replaceChildren();
+
+  const timelineSets: Array<{ code: string; name: string; iconSvgUri: string | null; releaseDate: string | null }> = [];
+  for (const [code, printings] of printingsBySet) {
+    const setInfo = allSets.find(s => s.code === code);
+    timelineSets.push({
+      code,
+      name: printings[0].setName,
+      iconSvgUri: setInfo?.iconSvgUri ?? null,
+      releaseDate: setInfo?.releaseDate ?? printings[0].releaseDate
+    });
+  }
+
+  timelineSets.sort((a, b) => {
+    if (!a.releaseDate) return 1;
+    if (!b.releaseDate) return -1;
+    return a.releaseDate.localeCompare(b.releaseDate);
+  });
+
+  for (const set of timelineSets) {
+    const item = document.createElement("div");
+    item.className = "timeline-set-item";
+    item.dataset.setCode = set.code;
+    item.title = set.name;
+
+    if (set.iconSvgUri) {
+      const img = document.createElement("img");
+      img.src = set.iconSvgUri;
+      img.alt = set.name;
+      img.className = "timeline-set-icon";
+      item.appendChild(img);
+    } else {
+      const label = document.createElement("span");
+      label.className = "timeline-set-code";
+      label.textContent = set.code.toUpperCase();
+      item.appendChild(label);
+    }
+
+    setTimeline.appendChild(item);
+  }
+
+  setTimeline.classList.remove("hidden");
+}
+
+function updateSetTimelineItem(setCode: string, isCorrect: boolean) {
+  const item = setTimeline.querySelector(`[data-set-code="${CSS.escape(setCode)}"]`) as HTMLElement | null;
+  if (!item) {
+    return;
+  }
+  if (!item.classList.contains("timeline-set-correct")) {
+    item.classList.toggle("timeline-set-correct", isCorrect);
+    item.classList.toggle("timeline-set-incorrect", !isCorrect);
+  }
+  item.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+}
+
 function appendSetNameNodes(parent: Node, iconSvgUri: string | null, name: string, code?: string): void {
   const icon = createSetIcon(iconSvgUri);
   if (icon) {
@@ -682,6 +740,7 @@ function submitGuess(guessedSet: SetInfo, guessedFinish: Finish, printing: Print
 
   guessedPrintingKeys.add(guessedKey);
   addGuessRow(guessedSet, guessedFinish, printing);
+  updateSetTimelineItem(guessedSet.code, correctSetCodes.has(guessedSet.code));
   clearSetGuess();
   if (selectedCard) {
     renderCardFrame(selectedCard);
@@ -846,6 +905,7 @@ async function setupGame(mode: GameMode) {
   }
 
   allSets = await fetchAllSets();
+  renderSetTimeline();
   guessStatus.textContent = "Start typing a set name or code to guess.";
 }
 
@@ -870,6 +930,8 @@ function resetGameState() {
   lastSetResults = [];
   clearSetGuess();
   resultsGrid.replaceChildren();
+  setTimeline.replaceChildren();
+  setTimeline.classList.add("hidden");
   guessStatus.textContent = "";
   closeVersionPicker();
   winModal.classList.add("hidden");
