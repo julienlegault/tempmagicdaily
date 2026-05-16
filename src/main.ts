@@ -230,7 +230,7 @@ function renderState() {
     const g = above[0];
     const diff = answerIndex() - g.index;
     const bar = bars[3];
-    if(Math.abs(diff)>5){
+    if (Math.abs(diff) > 5) {
     bar.textContent = `${g.name} | ${diff}`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
     bar.classList.add("hint-down");
@@ -242,7 +242,7 @@ function renderState() {
     const g = below[0];
     const diff = g.index - answerIndex();
     const bar = bars[6];
-    if(Math.abs(diff) > 5){
+    if (Math.abs(diff) > 5) {
     bar.textContent = `${g.name} | ${diff}`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
     bar.classList.add("hint-up");
@@ -264,7 +264,7 @@ function renderState() {
 
 
   if (Math.abs(last.index - answerIndex()) > 5 && last != above[0] && last != below[0]) {
-    const lastBar = bars[diff>0?9:0];
+    const lastBar = bars[diff > 0 ? 9 : 0];
     lastBar.textContent = `${last.name} | ${Math.abs(diff)}`;
     lastBar.style.backgroundColor = guessColor(Math.abs(diff));
     lastBar.classList.add(diff > 0 ? "hint-up" : "hint-down");
