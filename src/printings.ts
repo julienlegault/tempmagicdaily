@@ -118,6 +118,7 @@ const PRICE_COLOR_FAR = { r: 231, g: 76, b: 60 };
 const PRICE_COLOR_NO_DATA = "rgb(140, 65, 65)";
 const PRICE_DIFF_THRESHOLD = 0.5;
 const NO_PRINTING_TEXT = "No printing";
+const SHARE_URL = "https://julienlegault.github.io/tempmagicdaily/printings/";
 
 function seededRandom(seed: number) {
   return () => {
@@ -1012,13 +1013,14 @@ closeWinModal.addEventListener("click", () => {
 });
 
 shareResultsButton.addEventListener("click", () => {
-  const shareText = `Temp Magic Daily\n${shareRows.join("\n")}\nhttps://julienlegault.github.io/tempmagicdaily/printings/`;
+  const shareText = `Temp Magic Daily\n${shareRows.join("\n")}\n${SHARE_URL}`;
   navigator.clipboard.writeText(shareText).then(() => {
     shareResultsButton.textContent = "Copied!";
     setTimeout(() => {
       shareResultsButton.textContent = "Share Results";
     }, 2000);
-  }).catch(() => {
+  }).catch((err: unknown) => {
+    console.error("Clipboard write failed:", err);
     shareResultsButton.textContent = "Copy failed";
     setTimeout(() => {
       shareResultsButton.textContent = "Share Results";
