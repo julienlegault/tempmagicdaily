@@ -207,6 +207,12 @@ body {
   scrollbar-width: none;
   padding: 8px 4px;
   margin: 0 0 16px;
+  cursor: grab;
+  user-select: none;
+}
+
+.set-timeline.dragging {
+  cursor: grabbing;
 }
 
 .set-timeline::-webkit-scrollbar {

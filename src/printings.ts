@@ -120,6 +120,36 @@ let shareRows: string[] = [];
 let currentMode: GameMode = "practice";
 let timelineSetIndexByCode = new Map<string, number>();
 
+(function initTimelineDragScroll() {
+  let isDragging = false;
+  let dragStartX = 0;
+  let scrollStartLeft = 0;
+
+  setTimeline.addEventListener("mousedown", (e: MouseEvent) => {
+    if (e.button !== 0) return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    scrollStartLeft = setTimeline.scrollLeft;
+    setTimeline.classList.add("dragging");
+    e.preventDefault();
+  });
+
+  window.addEventListener("mousemove", (e: MouseEvent) => {
+    if (!isDragging) return;
+    const delta = e.clientX - dragStartX;
+    setTimeline.scrollLeft = scrollStartLeft - delta;
+  });
+
+  const stopDragging = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    setTimeline.classList.remove("dragging");
+  };
+
+  window.addEventListener("mouseup", stopDragging);
+  window.addEventListener("mouseleave", stopDragging);
+})();
+
 const RNG_MULTIPLIER = 9301;
 const RNG_INCREMENT = 49297;
 const RNG_MODULUS = 233280;
