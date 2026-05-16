@@ -74,6 +74,12 @@ type ScryfallList<T> = {
   next_page?: string;
 };
 
+type DailyPlayRecord = {
+  shareRows: string[];
+};
+
+type DailyPlayStore = Record<string, DailyPlayRecord>;
+
 const setGuessInput = document.getElementById("setGuessInput") as HTMLInputElement;
 const finishGuessInput = document.getElementById("finishGuessInput") as HTMLSelectElement;
 const setGuessButton = document.getElementById("setGuessButton") as HTMLButtonElement;
@@ -120,6 +126,8 @@ const PRICE_COLOR_NO_DATA = "rgb(140, 65, 65)";
 const PRICE_DIFF_THRESHOLD = 0.5;
 const NO_PRINTING_TEXT = "No printing";
 const SHARE_URL = "https://julienlegault.github.io/tempmagicdaily/printings/";
+const DAILY_PLAY_STORAGE_KEY = "tempmagicdaily-printings-daily-plays";
+const DAILY_PLAY_RETENTION_DAYS = 30;
 
 function seededRandom(seed: number) {
   return () => {
@@ -128,14 +136,96 @@ function seededRandom(seed: number) {
   };
 }
 
+function getUtcDateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 function getDailyIndex(max: number) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getUtcDateKey(new Date());
   let seed = 0;
   for (const c of today) {
     seed += c.charCodeAt(0);
   }
   const rand = seededRandom(seed);
   return Math.floor(rand() * max);
+}
+
+function getTodayKey() {
+  return getUtcDateKey(new Date());
+}
+
+function loadDailyPlayStore(): DailyPlayStore {
+  try {
+    const raw = localStorage.getItem(DAILY_PLAY_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
+
+    const store: DailyPlayStore = {};
+    for (const [date, value] of Object.entries(parsed)) {
+      if (typeof date !== "string" || !value || typeof value !== "object") {
+        continue;
+      }
+      const rows = (value as { shareRows?: unknown }).shareRows;
+      if (!Array.isArray(rows)) {
+        continue;
+      }
+      const shareRows = rows.filter((row): row is string => typeof row === "string");
+      store[date] = { shareRows };
+    }
+    return store;
+  } catch (error) {
+    console.error("Failed to parse daily play store:", error);
+    return {};
+  }
+}
+
+function persistDailyPlayStore(store: DailyPlayStore) {
+  try {
+    localStorage.setItem(DAILY_PLAY_STORAGE_KEY, JSON.stringify(store));
+  } catch (error) {
+    console.error("Failed to persist daily play store:", error);
+  }
+}
+
+function pruneDailyPlayStore(store: DailyPlayStore): DailyPlayStore {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+
+  const entries = Object.entries(store).filter(([date]) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!match) {
+      return false;
+    }
+
+    const [, year, month, day] = match;
+    const entryMs = Date.UTC(Number(year), Number(month) - 1, Number(day));
+    const ageDays = Math.floor((todayMs - entryMs) / 86400000);
+    return ageDays >= 0 && ageDays < DAILY_PLAY_RETENTION_DAYS;
+  });
+  return Object.fromEntries(entries);
+}
+
+function getDailyPlayRecord(dateKey: string): DailyPlayRecord | null {
+  const store = loadDailyPlayStore();
+  const prunedStore = pruneDailyPlayStore(store);
+  if (Object.keys(prunedStore).length !== Object.keys(store).length) {
+    persistDailyPlayStore(prunedStore);
+  }
+  return prunedStore[dateKey] ?? null;
+}
+
+function saveDailyPlayRecord(dateKey: string, shareRowsForDay: string[]) {
+  const prunedStore = pruneDailyPlayStore(loadDailyPlayStore());
+  prunedStore[dateKey] = {
+    shareRows: [...shareRowsForDay],
+  };
+  persistDailyPlayStore(prunedStore);
 }
 
 function getPracticeIndex(max: number) {
@@ -731,11 +821,22 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
   }
 
   if (currentMode === "daily") {
+    saveDailyPlayRecord(getTodayKey(), shareRows);
     shareResultsButton.classList.remove("hidden");
   } else {
     shareResultsButton.classList.add("hidden");
   }
 
+  winModal.classList.remove("hidden");
+}
+
+function showStoredDailyWinModal(record: DailyPlayRecord) {
+  shareRows = [...record.shareRows];
+  winMessage.textContent = "You already completed today's daily. You can copy your score again.";
+  winCardImage.removeAttribute("src");
+  winCardImage.alt = "";
+  winCardImage.classList.add("hidden");
+  shareResultsButton.classList.remove("hidden");
   winModal.classList.remove("hidden");
 }
 
@@ -1051,6 +1152,11 @@ versionPickerModal.addEventListener("click", event => {
 });
 
 startDailyMode.addEventListener("click", () => {
+  const savedDailyRecord = getDailyPlayRecord(getTodayKey());
+  if (savedDailyRecord) {
+    showStoredDailyWinModal(savedDailyRecord);
+    return;
+  }
   void startGame("daily");
 });
 
