@@ -17,7 +17,6 @@ type PrintingInfo = {
   id: string;
   setCode: string;
   setName: string;
-  artCropUrl: string | null;
   imageUrl: string | null;
   collectorNumber: string;
   releaseDate: string | null;
@@ -46,12 +45,10 @@ type ScryfallCard = {
     usd_etched: string | null;
   };
   image_uris?: {
-    art_crop?: string;
     normal?: string;
   };
   card_faces?: Array<{
     image_uris?: {
-      art_crop?: string;
       normal?: string;
     };
     oracle_text?: string;
@@ -189,10 +186,6 @@ function getCardImage(card: ScryfallCard): string | null {
   return card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal ?? null;
 }
 
-function getCardArtCrop(card: ScryfallCard): string | null {
-  return card.image_uris?.art_crop ?? card.card_faces?.[0]?.image_uris?.art_crop ?? null;
-}
-
 function getCardOracle(card: ScryfallCard): string {
   if (card.oracle_text) {
     return card.oracle_text;
@@ -263,7 +256,6 @@ function renderCardFrame(card: ScryfallCard) {
   const showManaCost = clueLevel >= 1;
   const showTypeLineAndStats = clueLevel >= 2;
   const showOracleText = clueLevel >= 3;
-  const revealArtCrop = clueLevel >= 4;
   const manaCost = getCardManaCost(card);
   const typeLine = getCardTypeLine(card);
   const oracleText = getCardOracle(card);
@@ -283,15 +275,7 @@ function renderCardFrame(card: ScryfallCard) {
 
   const artPlaceholder = document.createElement("div");
   artPlaceholder.className = "card-art-placeholder";
-  if (revealArtCrop && correctPrinting?.artCropUrl) {
-    const artCrop = document.createElement("img");
-    artCrop.className = "card-art-crop";
-    artCrop.src = correctPrinting.artCropUrl;
-    artCrop.alt = `${selectedCardName} art crop`;
-    artPlaceholder.appendChild(artCrop);
-  } else {
-    artPlaceholder.setAttribute("aria-hidden", "true");
-  }
+  artPlaceholder.setAttribute("aria-hidden", "true");
 
   const typeRow = document.createElement("div");
   typeRow.className = "card-type-row";
@@ -399,7 +383,6 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
         id: card.id,
         setCode: card.set.toLowerCase(),
         setName: card.set_name,
-        artCropUrl: getCardArtCrop(card),
         imageUrl: getCardImage(card),
         collectorNumber: card.collector_number,
         releaseDate: card.released_at ?? null,

@@ -120,12 +120,6 @@ h1 {
   margin: 0 20px;
 }
 
-.card-art-crop {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .card-type-row {
   grid-row: 4;
   padding: 19px 18px 0;
