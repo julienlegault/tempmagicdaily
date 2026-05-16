@@ -76,6 +76,9 @@ type ScryfallList<T> = {
 
 type DailyPlayRecord = {
   shareRows: string[];
+  cardName?: string;
+  priceText?: string;
+  imageUrl?: string;
 };
 
 type DailyPlayStore = Record<string, DailyPlayRecord>;
@@ -176,7 +179,15 @@ function loadDailyPlayStore(): DailyPlayStore {
         continue;
       }
       const shareRows = rows.filter((row): row is string => typeof row === "string");
-      store[date] = { shareRows };
+      const cardName = (value as { cardName?: unknown }).cardName;
+      const priceText = (value as { priceText?: unknown }).priceText;
+      const imageUrl = (value as { imageUrl?: unknown }).imageUrl;
+      store[date] = {
+        shareRows,
+        cardName: typeof cardName === "string" ? cardName : undefined,
+        priceText: typeof priceText === "string" ? priceText : undefined,
+        imageUrl: typeof imageUrl === "string" ? imageUrl : undefined,
+      };
     }
     return store;
   } catch (error) {
@@ -221,10 +232,19 @@ function getDailyPlayRecord(dateKey: string): DailyPlayRecord | null {
   return prunedStore[dateKey] ?? null;
 }
 
-function saveDailyPlayRecord(dateKey: string, shareRowsForDay: string[]) {
+function saveDailyPlayRecord(
+  dateKey: string,
+  shareRowsForDay: string[],
+  cardName: string,
+  priceText: string,
+  imageUrl: string | null,
+) {
   const prunedStore = pruneDailyPlayStore(loadDailyPlayStore());
   prunedStore[dateKey] = {
     shareRows: [...shareRowsForDay],
+    cardName,
+    priceText,
+    imageUrl: imageUrl ?? undefined,
   };
   persistDailyPlayStore(prunedStore);
 }
@@ -861,7 +881,13 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
   }
 
   if (currentMode === "daily") {
-    saveDailyPlayRecord(getTodayKey(), shareRows);
+    saveDailyPlayRecord(
+      getTodayKey(),
+      shareRows,
+      selectedCardName,
+      formatPrice(winningPrice),
+      printing.imageUrl,
+    );
     shareResultsButton.classList.remove("hidden");
   } else {
     shareResultsButton.classList.add("hidden");
@@ -872,10 +898,20 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
 
 function showStoredDailyWinModal(record: DailyPlayRecord) {
   shareRows = [...record.shareRows];
-  winMessage.textContent = "You already completed today's daily. You can copy your score again.";
-  winCardImage.removeAttribute("src");
-  winCardImage.alt = "";
-  winCardImage.classList.add("hidden");
+  if (record.cardName && record.priceText) {
+    winMessage.textContent = `You already completed today's daily. Today's card was ${record.cardName} at ${record.priceText}. You can copy your score again.`;
+  } else {
+    winMessage.textContent = "You already completed today's daily. You can copy your score again.";
+  }
+  if (record.imageUrl) {
+    winCardImage.src = record.imageUrl;
+    winCardImage.alt = record.cardName ? `${record.cardName} winning printing` : "Winning card printing";
+    winCardImage.classList.remove("hidden");
+  } else {
+    winCardImage.removeAttribute("src");
+    winCardImage.alt = "";
+    winCardImage.classList.add("hidden");
+  }
   shareResultsButton.classList.remove("hidden");
   winModal.classList.remove("hidden");
 }
