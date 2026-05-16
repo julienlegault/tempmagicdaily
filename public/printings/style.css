@@ -193,6 +193,8 @@ h1 {
   padding: 4px;
   background: transparent;
   transition: background-color 0.3s;
+  position: relative;
+  overflow: visible;
 }
 
 .timeline-set-icon {
@@ -231,6 +233,25 @@ h1 {
 
 .timeline-set-incorrect .timeline-set-fallback-square {
   background: #ececec;
+}
+
+.timeline-set-item.timeline-set-hint-left::after,
+.timeline-set-item.timeline-set-hint-right::after {
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  transform: translateX(-50%);
+  font-size: 12px;
+  line-height: 1;
+  color: #ececec;
+}
+
+.timeline-set-item.timeline-set-hint-left::after {
+  content: "←";
+}
+
+.timeline-set-item.timeline-set-hint-right::after {
+  content: "→";
 }
 
 .guess-panel {
