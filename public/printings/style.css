@@ -229,6 +229,10 @@ h1 {
   filter: brightness(0) invert(1);
 }
 
+.timeline-set-incorrect .timeline-set-fallback-square {
+  background: #ececec;
+}
+
 .guess-panel {
   position: relative;
 }
