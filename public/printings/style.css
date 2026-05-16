@@ -58,6 +58,19 @@ body {
   transition: background-color 0.3s;
 }
 
+.hard-mode-toggle {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.hard-mode-toggle input {
+  flex: 0 0 auto;
+}
+
 #startDailyMode {
   background: var(--accent-green);
 }

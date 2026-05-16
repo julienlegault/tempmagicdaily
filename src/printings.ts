@@ -2,6 +2,7 @@ export {};
 
 type CardListItem = string;
 type GameMode = "daily" | "practice";
+type PrintingStyle = "regular" | "borderless" | "extendedart";
 
 type SetInfo = {
   code: string;
@@ -22,6 +23,7 @@ type PrintingInfo = {
   releaseDate: string | null;
   releaseYear: number | null;
   prices: Record<Finish, number | null>;
+  style: PrintingStyle;
   modifiers: string[];
 };
 
@@ -79,12 +81,14 @@ type DailyPlayRecord = {
   cardName?: string;
   priceText?: string;
   imageUrl?: string;
+  hardMode?: boolean;
 };
 
 type DailyPlayStore = Record<string, DailyPlayRecord>;
 
 const setGuessInput = document.getElementById("setGuessInput") as HTMLInputElement;
 const finishGuessInput = document.getElementById("finishGuessInput") as HTMLSelectElement;
+const styleGuessInput = document.getElementById("styleGuessInput") as HTMLSelectElement;
 const setGuessButton = document.getElementById("setGuessButton") as HTMLButtonElement;
 const setAutocomplete = document.getElementById("setAutocomplete") as HTMLUListElement;
 const cardFrame = document.getElementById("cardFrame") as HTMLElement;
@@ -95,6 +99,7 @@ const modeLanding = document.getElementById("modeLanding") as HTMLElement;
 const gameArea = document.getElementById("gameArea") as HTMLElement;
 const startDailyMode = document.getElementById("startDailyMode") as HTMLButtonElement;
 const startPracticeMode = document.getElementById("startPracticeMode") as HTMLButtonElement;
+const hardModeInput = document.getElementById("hardModeInput") as HTMLInputElement;
 const winModal = document.getElementById("winModal") as HTMLElement;
 const closeWinModal = document.getElementById("closeWinModal") as HTMLButtonElement;
 const shareResultsButton = document.getElementById("shareResultsButton") as HTMLButtonElement;
@@ -118,6 +123,7 @@ let lastSetQuery = "";
 let lastSetResults: SetInfo[] = [];
 let shareRows: string[] = [];
 let currentMode: GameMode = "practice";
+let currentHardMode = false;
 let timelineSetIndexByCode = new Map<string, number>();
 
 (function initTimelineDragScroll() {
@@ -162,6 +168,8 @@ const NO_PRINTING_TEXT = "No printing";
 const SHARE_URL = "https://julienlegault.github.io/tempmagicdaily/printings/";
 const DAILY_PLAY_STORAGE_KEY = "tempmagicdaily-printings-daily-plays";
 const DAILY_PLAY_RETENTION_DAYS = 30;
+const NORMAL_ORACLE_CLUE_GUESS_COUNT = 3;
+const HARD_MODE_ORACLE_CLUE_GUESS_COUNT = 8;
 
 function seededRandom(seed: number) {
   return () => {
@@ -188,6 +196,10 @@ function getTodayKey() {
   return getUtcDateKey(new Date());
 }
 
+function getDailyRecordKey(dateKey: string, hardMode: boolean): string {
+  return hardMode ? `${dateKey}|hard` : dateKey;
+}
+
 function loadDailyPlayStore(): DailyPlayStore {
   try {
     const raw = localStorage.getItem(DAILY_PLAY_STORAGE_KEY);
@@ -212,11 +224,13 @@ function loadDailyPlayStore(): DailyPlayStore {
       const cardName = (value as { cardName?: unknown }).cardName;
       const priceText = (value as { priceText?: unknown }).priceText;
       const imageUrl = (value as { imageUrl?: unknown }).imageUrl;
+      const hardMode = (value as { hardMode?: unknown }).hardMode;
       store[date] = {
         shareRows,
         cardName: typeof cardName === "string" ? cardName : undefined,
         priceText: typeof priceText === "string" ? priceText : undefined,
         imageUrl: typeof imageUrl === "string" ? imageUrl : undefined,
+        hardMode: typeof hardMode === "boolean" ? hardMode : undefined,
       };
     }
     return store;
@@ -240,7 +254,7 @@ function pruneDailyPlayStore(store: DailyPlayStore): DailyPlayStore {
   const todayMs = today.getTime();
 
   const entries = Object.entries(store).filter(([date]) => {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    const match = /^(\d{4})-(\d{2})-(\d{2})(?:\|hard)?$/.exec(date);
     if (!match) {
       return false;
     }
@@ -268,6 +282,7 @@ function saveDailyPlayRecord(
   cardName: string,
   priceText: string,
   imageUrl: string | null,
+  hardMode: boolean,
 ) {
   const prunedStore = pruneDailyPlayStore(loadDailyPlayStore());
   prunedStore[dateKey] = {
@@ -275,6 +290,7 @@ function saveDailyPlayRecord(
     cardName,
     priceText,
     imageUrl: imageUrl ?? undefined,
+    hardMode,
   };
   persistDailyPlayStore(prunedStore);
 }
@@ -326,6 +342,27 @@ function formatFinish(finish: Finish): string {
 function getSelectedFinish(): Finish {
   const finish = finishGuessInput.value;
   return finish === "foil" || finish === "nonfoil" ? finish : "nonfoil";
+}
+
+function getSelectedStyle(): PrintingStyle {
+  const style = styleGuessInput.value;
+  return style === "regular" || style === "borderless" || style === "extendedart" ? style : "regular";
+}
+
+function getStyleLabel(style: PrintingStyle): string {
+  if (style === "borderless") return "Borderless";
+  if (style === "extendedart") return "Extended Art";
+  return "Regular";
+}
+
+function getPrintingStyle(card: ScryfallCard): PrintingStyle {
+  if (card.frame_effects?.includes("extendedart")) {
+    return "extendedart";
+  }
+  if (card.border_color === "borderless") {
+    return "borderless";
+  }
+  return "regular";
 }
 
 function getCardImage(card: ScryfallCard): string | null {
@@ -401,7 +438,7 @@ function renderCardFrame(card: ScryfallCard) {
   const clueLevel = guessedPrintingKeys.size;
   const showManaCost = clueLevel >= 1;
   const showTypeLineAndStats = clueLevel >= 2;
-  const showOracleText = clueLevel >= 3;
+  const showOracleText = clueLevel >= (currentHardMode ? HARD_MODE_ORACLE_CLUE_GUESS_COUNT : NORMAL_ORACLE_CLUE_GUESS_COUNT);
   const manaCost = getCardManaCost(card);
   const typeLine = getCardTypeLine(card);
   const oracleText = getCardOracle(card);
@@ -435,6 +472,9 @@ function renderCardFrame(card: ScryfallCard) {
 
   const textBox = document.createElement("div");
   textBox.className = "card-text-box";
+  if (currentHardMode && !showOracleText) {
+    textBox.classList.add("hidden");
+  }
   if (showOracleText) {
     const oracle = document.createElement("p");
     oracle.className = "card-oracle";
@@ -537,6 +577,7 @@ async function fetchAllPrintings(cardName: string): Promise<PrintingInfo[]> {
           nonfoil: nonfoilPrice,
           foil: foilPrice
         },
+        style: getPrintingStyle(card),
         modifiers
       });
     }
@@ -771,8 +812,8 @@ function getGuessResultText(printing: PrintingInfo | null, finish: Finish): stri
   return finish === "foil" ? "No foil printing" : NO_PRINTING_TEXT;
 }
 
-function getGuessKey(setCode: string, finish: Finish, printing: PrintingInfo | null): string {
-  return printing ? `${printing.id}:${finish}` : `${setCode}:missing:${finish}`;
+function getGuessKey(setCode: string, finish: Finish, printing: PrintingInfo | null, style: PrintingStyle | null = null): string {
+  return printing ? `${printing.id}:${finish}` : `${setCode}:missing:${finish}:${style ?? "none"}`;
 }
 
 function getYearComparisonArrow(guessedYear: number | null, answerYear: number | null): string {
@@ -833,11 +874,36 @@ function getPrintingOptionCaption(printing: PrintingInfo): string {
   return pieces.join(" • ");
 }
 
-function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null) {
+function pickHardModePrinting(printings: PrintingInfo[], style: PrintingStyle, finish: Finish): PrintingInfo | null {
+  const matches = printings.filter(printing => printing.style === style);
+  if (!matches.length) {
+    return null;
+  }
+  return matches.sort((a, b) => {
+    const aPrice = getPrintingPrice(a, finish);
+    const bPrice = getPrintingPrice(b, finish);
+    if (aPrice !== null && bPrice !== null && aPrice !== bPrice) {
+      return bPrice - aPrice;
+    }
+    if (aPrice !== null && bPrice === null) {
+      return -1;
+    }
+    if (aPrice === null && bPrice !== null) {
+      return 1;
+    }
+    const collectorNumberComparison = a.collectorNumber.localeCompare(b.collectorNumber, undefined, { numeric: true });
+    if (collectorNumberComparison !== 0) {
+      return collectorNumberComparison;
+    }
+    return a.id.localeCompare(b.id);
+  })[0] ?? null;
+}
+
+function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null, guessedStyle: PrintingStyle | null = null) {
   const row = document.createElement("div");
   row.className = "result-item results-row";
 
-  const guessedKey = getGuessKey(set.code, finish, printing);
+  const guessedKey = getGuessKey(set.code, finish, printing, guessedStyle);
   const isSetCorrect = correctSetCodes.has(set.code);
   const isPrintingCorrect = printing !== null && correctAnswerKeys.has(guessedKey);
 
@@ -851,10 +917,16 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   if (printing) {
     variantParts.push(`#${printing.collectorNumber}`);
     variantParts.push(formatFinish(finish));
+    if (currentHardMode) {
+      variantParts.push(getStyleLabel(printing.style));
+    }
     variantParts.push(...printing.modifiers);
   } else {
     // Occurs when a set has no paper printing for this card (e.g. digital-only or missing data)
     variantParts.push(formatFinish(finish));
+    if (guessedStyle) {
+      variantParts.push(getStyleLabel(guessedStyle));
+    }
     variantParts.push("No printing");
   }
   numberCell.textContent = variantParts.join(" • ");
@@ -912,11 +984,12 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
 
   if (currentMode === "daily") {
     saveDailyPlayRecord(
-      getTodayKey(),
+      getDailyRecordKey(getTodayKey(), currentHardMode),
       shareRows,
       selectedCardName,
       formatPrice(winningPrice),
       printing.imageUrl,
+      currentHardMode,
     );
     shareResultsButton.classList.remove("hidden");
   } else {
@@ -942,6 +1015,7 @@ async function fetchCardImageByName(cardName: string): Promise<string | null> {
 }
 
 async function showStoredDailyWinModal(record: DailyPlayRecord) {
+  currentHardMode = record.hardMode ?? currentHardMode;
   shareRows = [...record.shareRows];
   if (record.cardName && record.priceText) {
     winMessage.textContent = `You already completed today's daily. Today's card was ${record.cardName} at ${record.priceText}. You can copy your score again.`;
@@ -953,7 +1027,14 @@ async function showStoredDailyWinModal(record: DailyPlayRecord) {
   if (!imageUrl && record.cardName) {
     imageUrl = await fetchCardImageByName(record.cardName);
     if (imageUrl) {
-      saveDailyPlayRecord(getTodayKey(), record.shareRows, record.cardName, record.priceText ?? "", imageUrl);
+      saveDailyPlayRecord(
+        getDailyRecordKey(getTodayKey(), record.hardMode ?? currentHardMode),
+        record.shareRows,
+        record.cardName,
+        record.priceText ?? "",
+        imageUrl,
+        record.hardMode ?? currentHardMode,
+      );
     }
   }
 
@@ -999,8 +1080,8 @@ function closeVersionPicker() {
   versionPickerModal.classList.add("hidden");
 }
 
-function submitGuess(guessedSet: SetInfo, guessedFinish: Finish, printing: PrintingInfo | null) {
-  const guessedKey = getGuessKey(guessedSet.code, guessedFinish, printing);
+function submitGuess(guessedSet: SetInfo, guessedFinish: Finish, printing: PrintingInfo | null, guessedStyle: PrintingStyle | null = null) {
+  const guessedKey = getGuessKey(guessedSet.code, guessedFinish, printing, guessedStyle);
 
   if (guessedPrintingKeys.has(guessedKey)) {
     guessStatus.textContent = "You already guessed that version and finish.";
@@ -1009,8 +1090,10 @@ function submitGuess(guessedSet: SetInfo, guessedFinish: Finish, printing: Print
   }
 
   guessedPrintingKeys.add(guessedKey);
-  addGuessRow(guessedSet, guessedFinish, printing);
-  updateSetTimelineItem(guessedSet.code, correctSetCodes.has(guessedSet.code));
+  addGuessRow(guessedSet, guessedFinish, printing, guessedStyle);
+  if (!currentHardMode) {
+    updateSetTimelineItem(guessedSet.code, correctSetCodes.has(guessedSet.code));
+  }
   clearSetGuess();
   if (selectedCard) {
     renderCardFrame(selectedCard);
@@ -1087,7 +1170,14 @@ function handleGuess() {
   }
 
   const guessedFinish = getSelectedFinish();
+  const guessedStyle = getSelectedStyle();
   const printings = printingsBySet.get(guessedSet.code) ?? [];
+
+  if (currentHardMode) {
+    const hardModePrinting = pickHardModePrinting(printings, guessedStyle, guessedFinish);
+    submitGuess(guessedSet, guessedFinish, hardModePrinting, guessedStyle);
+    return;
+  }
 
   if (printings.length > 1) {
     guessStatus.textContent = "Choose which version you want to guess.";
@@ -1175,8 +1265,14 @@ async function setupGame(mode: GameMode) {
   }
 
   allSets = await fetchAllSets();
-  renderSetTimeline();
-  guessStatus.textContent = "Start typing a set name or code to guess.";
+  if (currentHardMode) {
+    setTimeline.classList.add("hidden");
+  } else {
+    renderSetTimeline();
+  }
+  guessStatus.textContent = currentHardMode
+    ? "Start typing a set name or code, then choose foil and style to guess."
+    : "Start typing a set name or code to guess.";
 }
 
 function setLoadingState() {
@@ -1215,8 +1311,9 @@ function showLanding() {
   modeLanding.classList.remove("hidden");
 }
 
-async function startGame(mode: GameMode) {
+async function startGame(mode: GameMode, hardMode: boolean) {
   currentMode = mode;
+  currentHardMode = hardMode;
   resetGameState();
   modeLanding.classList.add("hidden");
   gameArea.classList.remove("hidden");
@@ -1253,7 +1350,8 @@ closeWinModal.addEventListener("click", () => {
 });
 
 shareResultsButton.addEventListener("click", () => {
-  const shareText = `Temp Magic Daily\n${shareRows.join("\n")}\n${SHARE_URL}`;
+  const modeLine = currentHardMode ? "\nHard Mode" : "";
+  const shareText = `Temp Magic Daily${modeLine}\n${shareRows.join("\n")}\n${SHARE_URL}`;
   navigator.clipboard.writeText(shareText).then(() => {
     shareResultsButton.textContent = "Copied!";
     setTimeout(() => {
@@ -1283,16 +1381,18 @@ versionPickerModal.addEventListener("click", event => {
 });
 
 startDailyMode.addEventListener("click", () => {
-  const savedDailyRecord = getDailyPlayRecord(getTodayKey());
+  currentHardMode = hardModeInput.checked;
+  const savedDailyRecord = getDailyPlayRecord(getDailyRecordKey(getTodayKey(), currentHardMode));
   if (savedDailyRecord) {
     void showStoredDailyWinModal(savedDailyRecord);
     return;
   }
-  void startGame("daily");
+  void startGame("daily", currentHardMode);
 });
 
 startPracticeMode.addEventListener("click", () => {
-  void startGame("practice");
+  currentHardMode = hardModeInput.checked;
+  void startGame("practice", currentHardMode);
 });
 
 showLanding();
