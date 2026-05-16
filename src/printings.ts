@@ -460,7 +460,7 @@ function createSetIcon(iconSvgUri: string | null): HTMLImageElement | null {
 }
 
 function getSetSymbolLabel(set: SetInfo): string {
-  if (set.releaseYear === null) {
+  if (set.releaseYear == null) {
     return set.name;
   }
   const yearText = String(set.releaseYear);
