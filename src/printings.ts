@@ -108,6 +108,7 @@ let guessedPrintingKeys = new Set<string>();
 let lastSetQuery = "";
 let lastSetResults: SetInfo[] = [];
 let shareRows: string[] = [];
+let currentMode: GameMode = "practice";
 
 const RNG_MULTIPLIER = 9301;
 const RNG_INCREMENT = 49297;
@@ -729,6 +730,12 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
     winCardImage.classList.add("hidden");
   }
 
+  if (currentMode === "daily") {
+    shareResultsButton.classList.remove("hidden");
+  } else {
+    shareResultsButton.classList.add("hidden");
+  }
+
   winModal.classList.remove("hidden");
 }
 
@@ -977,6 +984,7 @@ function showLanding() {
 }
 
 async function startGame(mode: GameMode) {
+  currentMode = mode;
   resetGameState();
   modeLanding.classList.add("hidden");
   gameArea.classList.remove("hidden");
