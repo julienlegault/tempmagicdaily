@@ -241,17 +241,17 @@ h1 {
   left: 50%;
   bottom: -12px;
   transform: translateX(-50%);
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1;
   color: #ececec;
 }
 
 .timeline-set-item.timeline-set-hint-left::after {
-  content: "←";
+  content: "◀";
 }
 
 .timeline-set-item.timeline-set-hint-right::after {
-  content: "→";
+  content: "▶";
 }
 
 .guess-panel {
