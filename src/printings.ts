@@ -896,15 +896,39 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
   winModal.classList.remove("hidden");
 }
 
-function showStoredDailyWinModal(record: DailyPlayRecord) {
+async function fetchCardImageByName(cardName: string): Promise<string | null> {
+  try {
+    const response = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}`);
+    if (!response.ok) {
+      console.error(`Failed to fetch card image for "${cardName}": HTTP ${response.status}`);
+      return null;
+    }
+    const card = (await response.json()) as ScryfallCard;
+    return getCardImage(card);
+  } catch (error) {
+    console.error(`Failed to fetch card image for "${cardName}":`, error);
+    return null;
+  }
+}
+
+async function showStoredDailyWinModal(record: DailyPlayRecord) {
   shareRows = [...record.shareRows];
   if (record.cardName && record.priceText) {
     winMessage.textContent = `You already completed today's daily. Today's card was ${record.cardName} at ${record.priceText}. You can copy your score again.`;
   } else {
     winMessage.textContent = "You already completed today's daily. You can copy your score again.";
   }
-  if (record.imageUrl) {
-    winCardImage.src = record.imageUrl;
+
+  let imageUrl = record.imageUrl ?? null;
+  if (!imageUrl && record.cardName) {
+    imageUrl = await fetchCardImageByName(record.cardName);
+    if (imageUrl) {
+      saveDailyPlayRecord(getTodayKey(), record.shareRows, record.cardName, record.priceText ?? "", imageUrl);
+    }
+  }
+
+  if (imageUrl) {
+    winCardImage.src = imageUrl;
     winCardImage.alt = record.cardName ? `${record.cardName} winning printing` : "Winning card printing";
     winCardImage.classList.remove("hidden");
   } else {
@@ -1231,7 +1255,7 @@ versionPickerModal.addEventListener("click", event => {
 startDailyMode.addEventListener("click", () => {
   const savedDailyRecord = getDailyPlayRecord(getTodayKey());
   if (savedDailyRecord) {
-    showStoredDailyWinModal(savedDailyRecord);
+    void showStoredDailyWinModal(savedDailyRecord);
     return;
   }
   void startGame("daily");
