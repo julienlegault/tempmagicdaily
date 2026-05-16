@@ -1,12 +1,12 @@
 :root {
   color-scheme: dark;
-  --bg: #090b11;
-  --panel: #141920;
-  --text: #f0f2f5;
-  --muted: #c6ccd7;
-  --border: #303847;
-  --accent-green: #6aa84f;
-  --accent-orange: #ff4b06;
+  --bg: #111;
+  --panel: rgba(255, 255, 255, 0.08);
+  --text: #fff;
+  --muted: #ccc;
+  --border: #444;
+  --accent-green: #63a452;
+  --accent-orange: #f4440a;
   --menu-help-gap-desktop: 220px;
   --menu-help-gap-mobile: 140px;
   --set-icon-filter: brightness(0) invert(1);
@@ -18,19 +18,21 @@
 
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
+  text-align: center;
 }
 
 .page {
-  max-width: 760px;
+  max-width: 800px;
   margin: 20px auto;
   padding: 0 16px 30px;
+  text-align: left;
 }
 
 .menu-title {
-  margin: 16px 0 0;
+  margin: 20px 0 0;
   text-align: center;
   font-size: clamp(2.4rem, 8vw, 4.6rem);
   line-height: 1.05;
@@ -48,19 +50,28 @@ body {
 
 .mode-actions button {
   min-width: min(100%, 320px);
-  padding: 24px 28px;
-  font-size: clamp(1.65rem, 5vw, 3rem);
-  border-radius: 14px;
+  padding: 18px 24px;
+  font-size: clamp(1.45rem, 4.2vw, 2.35rem);
+  border-radius: 8px;
   border: 0;
   line-height: 1;
+  transition: background-color 0.3s;
 }
 
 #startDailyMode {
   background: var(--accent-green);
 }
 
+#startDailyMode:hover {
+  background: #75c760;
+}
+
 #startPracticeMode {
   background: var(--accent-orange);
+}
+
+#startPracticeMode:hover {
+  background: #df743a;
 }
 
 .card-frame {
@@ -302,16 +313,17 @@ select {
 }
 
 button {
-  padding: 10px 14px;
+  padding: 10px 20px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--accent-orange);
   color: var(--text);
   cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 button:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.08);
 }
 
 .autocomplete {
@@ -352,7 +364,10 @@ button:hover {
   padding: 14px 16px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
+  max-width: 600px;
+  margin-inline: auto;
+  text-align: center;
 }
 
 .menu-how-to-play {
@@ -375,6 +390,7 @@ button:hover {
   padding-left: 20px;
   display: grid;
   gap: 6px;
+  text-align: left;
 }
 
 .results-row {
@@ -391,7 +407,7 @@ button:hover {
 }
 
 .result-item {
-  background: var(--panel);
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--border);
   border-radius: 8px;
   margin-bottom: 8px;
@@ -410,16 +426,16 @@ button:hover {
   border-radius: 6px;
   padding: 6px;
   font-weight: 600;
-  background: #171a1d;
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .result-year-close {
-  background: #c9a227;
+  background: #ffb02f;
   color: #10161b;
 }
 
 .result-year-exact {
-  background: #6aa84f;
+  background: #75c760;
   color: #10161b;
 }
 
@@ -436,7 +452,7 @@ button:hover {
 }
 
 .result-set-correct {
-  background: #6aa84f;
+  background: #75c760;
   color: #10161b;
 }
 
@@ -454,7 +470,7 @@ button:hover {
 }
 
 .result-number-correct {
-  background: #6aa84f;
+  background: #75c760;
   color: #10161b;
 }
 
@@ -480,7 +496,7 @@ button:hover {
 .modal-content {
   max-width: 420px;
   width: 100%;
-  background: #1b1e22;
+  background: #111;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 18px;
@@ -514,7 +530,7 @@ button:hover {
   gap: 8px;
   align-items: stretch;
   padding: 10px;
-  background: #1e242d;
+  background: #171a1d;
 }
 
 .version-option img,
