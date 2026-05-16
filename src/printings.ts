@@ -485,6 +485,7 @@ function renderSetTimeline() {
     item.dataset.setCode = set.code;
     const symbolLabel = getSetSymbolLabel(set);
     item.title = symbolLabel;
+    item.setAttribute("aria-label", symbolLabel);
 
     if (set.iconSvgUri) {
       const img = document.createElement("img");
