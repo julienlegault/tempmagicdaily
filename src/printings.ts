@@ -575,7 +575,7 @@ function renderSetTimeline() {
     return a.releaseDate.localeCompare(b.releaseDate);
   });
 
-  for (const set of timelineSets) {
+  timelineSets.forEach((set, index) => {
     const item = document.createElement("div");
     item.className = "timeline-set-item";
     item.dataset.setCode = set.code;
@@ -597,8 +597,8 @@ function renderSetTimeline() {
     }
 
     setTimeline.appendChild(item);
-    timelineSetIndexByCode.set(set.code, timelineSetIndexByCode.size);
-  }
+    timelineSetIndexByCode.set(set.code, index);
+  });
 
   setTimeline.classList.remove("hidden");
 }
@@ -636,8 +636,13 @@ function updateSetTimelineItem(setCode: string, isCorrect: boolean) {
   if (!item) {
     return;
   }
-  item.classList.toggle("timeline-set-correct", isCorrect);
-  item.classList.toggle("timeline-set-incorrect", !isCorrect);
+  if (isCorrect) {
+    item.classList.add("timeline-set-correct");
+    item.classList.remove("timeline-set-incorrect");
+  } else {
+    item.classList.add("timeline-set-incorrect");
+    item.classList.remove("timeline-set-correct");
+  }
   item.classList.remove("timeline-set-hint-left", "timeline-set-hint-right");
 
   if (!isCorrect) {
