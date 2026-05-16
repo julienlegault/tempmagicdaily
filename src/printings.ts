@@ -136,8 +136,12 @@ function seededRandom(seed: number) {
   };
 }
 
+function getUtcDateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 function getDailyIndex(max: number) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getUtcDateKey(new Date());
   let seed = 0;
   for (const c of today) {
     seed += c.charCodeAt(0);
@@ -147,7 +151,7 @@ function getDailyIndex(max: number) {
 }
 
 function getTodayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return getUtcDateKey(new Date());
 }
 
 function getRetentionCutoffKey() {
@@ -202,8 +206,11 @@ function pruneDailyPlayStore(store: DailyPlayStore): DailyPlayStore {
 }
 
 function getDailyPlayRecord(dateKey: string): DailyPlayRecord | null {
-  const prunedStore = pruneDailyPlayStore(loadDailyPlayStore());
-  persistDailyPlayStore(prunedStore);
+  const store = loadDailyPlayStore();
+  const prunedStore = pruneDailyPlayStore(store);
+  if (Object.keys(prunedStore).length !== Object.keys(store).length) {
+    persistDailyPlayStore(prunedStore);
+  }
   return prunedStore[dateKey] ?? null;
 }
 
