@@ -1015,7 +1015,8 @@ async function fetchCardImageByName(cardName: string): Promise<string | null> {
 }
 
 async function showStoredDailyWinModal(record: DailyPlayRecord) {
-  currentHardMode = record.hardMode ?? currentHardMode;
+  const storedHardMode = record.hardMode ?? false;
+  currentHardMode = storedHardMode;
   shareRows = [...record.shareRows];
   if (record.cardName && record.priceText) {
     winMessage.textContent = `You already completed today's daily. Today's card was ${record.cardName} at ${record.priceText}. You can copy your score again.`;
@@ -1028,12 +1029,12 @@ async function showStoredDailyWinModal(record: DailyPlayRecord) {
     imageUrl = await fetchCardImageByName(record.cardName);
     if (imageUrl) {
       saveDailyPlayRecord(
-        getDailyRecordKey(getTodayKey(), record.hardMode ?? currentHardMode),
+        getDailyRecordKey(getTodayKey(), storedHardMode),
         record.shareRows,
         record.cardName,
         record.priceText ?? "",
         imageUrl,
-        record.hardMode ?? currentHardMode,
+        storedHardMode,
       );
     }
   }
