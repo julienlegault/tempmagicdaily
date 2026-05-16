@@ -64,6 +64,8 @@ button {
   opacity: 0.6;
   transform-origin: center;
   text-align: center;
+  position: relative;
+  overflow: visible;
 }
 
 .bar[data-index="0"] {
@@ -99,6 +101,25 @@ button {
 .bar.center {
   background: #888;
   opacity: 1;
+}
+
+.bar.hint-up::after,
+.bar.hint-down::after {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.bar.hint-up::after {
+  content: "↑";
+}
+
+.bar.hint-down::after {
+  content: "↓";
 }
 
 .bar.correct {
