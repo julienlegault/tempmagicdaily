@@ -154,13 +154,6 @@ function getTodayKey() {
   return getUtcDateKey(new Date());
 }
 
-function getRetentionCutoffKey() {
-  const cutoff = new Date();
-  cutoff.setUTCHours(0, 0, 0, 0);
-  cutoff.setUTCDate(cutoff.getUTCDate() - (DAILY_PLAY_RETENTION_DAYS - 1));
-  return cutoff.toISOString().slice(0, 10);
-}
-
 function loadDailyPlayStore(): DailyPlayStore {
   try {
     const raw = localStorage.getItem(DAILY_PLAY_STORAGE_KEY);
@@ -200,8 +193,21 @@ function persistDailyPlayStore(store: DailyPlayStore) {
 }
 
 function pruneDailyPlayStore(store: DailyPlayStore): DailyPlayStore {
-  const cutoff = getRetentionCutoffKey();
-  const entries = Object.entries(store).filter(([date]) => date >= cutoff);
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+
+  const entries = Object.entries(store).filter(([date]) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!match) {
+      return false;
+    }
+
+    const [, year, month, day] = match;
+    const entryMs = Date.UTC(Number(year), Number(month) - 1, Number(day));
+    const ageDays = Math.floor((todayMs - entryMs) / 86400000);
+    return ageDays >= 0 && ageDays < DAILY_PLAY_RETENTION_DAYS;
+  });
   return Object.fromEntries(entries);
 }
 
