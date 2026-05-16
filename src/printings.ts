@@ -88,6 +88,7 @@ const startDailyMode = document.getElementById("startDailyMode") as HTMLButtonEl
 const startPracticeMode = document.getElementById("startPracticeMode") as HTMLButtonElement;
 const winModal = document.getElementById("winModal") as HTMLElement;
 const closeWinModal = document.getElementById("closeWinModal") as HTMLButtonElement;
+const shareResultsButton = document.getElementById("shareResultsButton") as HTMLButtonElement;
 const winMessage = document.getElementById("winMessage") as HTMLElement;
 const winCardImage = document.getElementById("winCardImage") as HTMLImageElement;
 const versionPickerModal = document.getElementById("versionPickerModal") as HTMLElement;
@@ -106,6 +107,7 @@ let correctSetCodes = new Set<string>();
 let guessedPrintingKeys = new Set<string>();
 let lastSetQuery = "";
 let lastSetResults: SetInfo[] = [];
+let shareRows: string[] = [];
 
 const RNG_MULTIPLIER = 9301;
 const RNG_INCREMENT = 49297;
@@ -621,6 +623,26 @@ function getYearResultClass(set: SetInfo): string {
   return "result-year-far";
 }
 
+function getPriceShareEmoji(price: number | null, answerPrice: number): string {
+  if (price === null) return "🟥";
+  if (answerPrice <= 0) return price <= 0 ? "🟩" : "🟥";
+
+  const ratio = Math.abs(price - answerPrice) / answerPrice;
+  const clamped = Math.min(ratio / PRICE_DIFF_THRESHOLD, 1);
+
+  if (clamped < 0.25) return "🟩";
+  if (clamped < 0.5) return "🟨";
+  if (clamped < 0.75) return "🟧";
+  return "🟥";
+}
+
+function getYearShareEmoji(set: SetInfo): string {
+  const yearClass = getYearResultClass(set);
+  if (yearClass === "result-year-exact") return "🟩";
+  if (yearClass === "result-year-close") return "🟨";
+  return "🟥";
+}
+
 function getPrintingOptionCaption(printing: PrintingInfo): string {
   const pieces = [`#${printing.collectorNumber}`];
   if (printing.releaseYear !== null) {
@@ -674,7 +696,14 @@ function addGuessRow(set: SetInfo, finish: Finish, printing: PrintingInfo | null
   row.appendChild(numberCell);
   row.appendChild(priceCell);
   row.appendChild(yearCell);
-  resultsGrid.prepend(row);
+
+  const setEmoji = isSetCorrect ? "🟩" : "🟥";
+  const numberEmoji = isPrintingCorrect ? "🟩" : "🟥";
+  const priceEmoji = getPriceShareEmoji(price, winningPrice);
+  const yearEmoji = getYearShareEmoji(set);
+  shareRows.push(`${setEmoji}${numberEmoji}${priceEmoji}${yearEmoji}`);
+
+  resultsGrid.appendChild(row);
 }
 
 function showWinModal(printing: PrintingInfo, finish: Finish) {
@@ -930,6 +959,7 @@ function resetGameState() {
   guessedPrintingKeys.clear();
   lastSetQuery = "";
   lastSetResults = [];
+  shareRows = [];
   clearSetGuess();
   resultsGrid.replaceChildren();
   setTimeline.replaceChildren();
@@ -979,6 +1009,21 @@ setGuessButton.addEventListener("click", handleGuess);
 
 closeWinModal.addEventListener("click", () => {
   showLanding();
+});
+
+shareResultsButton.addEventListener("click", () => {
+  const shareText = `Temp Magic Daily\n${shareRows.join("\n")}\nhttps://julienlegault.github.io/tempmagicdaily/printings/`;
+  navigator.clipboard.writeText(shareText).then(() => {
+    shareResultsButton.textContent = "Copied!";
+    setTimeout(() => {
+      shareResultsButton.textContent = "Share Results";
+    }, 2000);
+  }).catch(() => {
+    shareResultsButton.textContent = "Copy failed";
+    setTimeout(() => {
+      shareResultsButton.textContent = "Share Results";
+    }, 2000);
+  });
 });
 
 closeVersionPickerModal.addEventListener("click", closeVersionPicker);
