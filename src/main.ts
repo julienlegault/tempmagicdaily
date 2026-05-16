@@ -206,15 +206,12 @@ function renderState() {
   bars.forEach(b => (b.textContent = ""));
   bars.forEach(bar => {
     bar.style.backgroundColor = "";
+    bar.classList.remove("hint-up", "hint-down");
   });
   answerBar.classList.remove("hint-up", "hint-down");
   
   const last = guesses[guesses.length - 1];
   const diff = last ? last.index - answerIndex() : 0;
-
-  if (last && diff !== 0) {
-    answerBar.classList.add(diff > 0 ? "hint-up" : "hint-down");
-  }
 
   if (diff === 0) {
     answerBar.textContent = `${last.name} (${guesses.length} guesses)`;
@@ -234,8 +231,9 @@ function renderState() {
     const diff = answerIndex() - g.index;
     const bar = bars[3];
     if(Math.abs(diff)>5){
-    bar.textContent = `${g.name} | ${diff} ↓`;
+    bar.textContent = `${g.name} | ${diff}`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
+    bar.classList.add("hint-down");
     }
   }
 
@@ -245,8 +243,9 @@ function renderState() {
     const diff = g.index - answerIndex();
     const bar = bars[6];
     if(Math.abs(diff) > 5){
-    bar.textContent = `${g.name} | ${diff} ↑`;
+    bar.textContent = `${g.name} | ${diff}`;
     bar.style.backgroundColor = guessColor(Math.abs(diff));
+    bar.classList.add("hint-up");
     }
   }
 
@@ -256,8 +255,9 @@ function renderState() {
     if (Math.abs(diff) <= 5 && diff !== 0) {
       const barIndex = 5 + diff;
       if (bars[barIndex]) {
-        bars[barIndex].textContent = `${g.name} | ${Math.abs(diff)} ${diff > 0 ? "↑" : "↓"}`;
+        bars[barIndex].textContent = `${g.name} | ${Math.abs(diff)}`;
         bars[barIndex].style.backgroundColor = guessColor(Math.abs(diff));
+        bars[barIndex].classList.add(diff > 0 ? "hint-up" : "hint-down");
       }
     }
   });
@@ -265,7 +265,8 @@ function renderState() {
 
   if (Math.abs(last.index - answerIndex()) > 5 && last != above[0] && last != below[0]) {
     const lastBar = bars[diff>0?9:0];
-    lastBar.textContent = `${last.name} | ${Math.abs(diff)} ${diff > 0 ? "↑" : "↓"}`;
+    lastBar.textContent = `${last.name} | ${Math.abs(diff)}`;
     lastBar.style.backgroundColor = guessColor(Math.abs(diff));
+    lastBar.classList.add(diff > 0 ? "hint-up" : "hint-down");
   }
 }
