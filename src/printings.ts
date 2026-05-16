@@ -462,18 +462,7 @@ function createSetIcon(iconSvgUri: string | null): HTMLImageElement | null {
 function renderSetTimeline() {
   setTimeline.replaceChildren();
 
-  const timelineSets: Array<{ code: string; name: string; iconSvgUri: string | null; releaseDate: string | null }> = [];
-  for (const [code, printings] of printingsBySet) {
-    const setInfo = allSets.find(s => s.code === code);
-    timelineSets.push({
-      code,
-      name: printings[0].setName,
-      iconSvgUri: setInfo?.iconSvgUri ?? null,
-      releaseDate: setInfo?.releaseDate ?? printings[0].releaseDate
-    });
-  }
-
-  timelineSets.sort((a, b) => {
+  const timelineSets = [...allSets].sort((a, b) => {
     if (!a.releaseDate) return 1;
     if (!b.releaseDate) return -1;
     return a.releaseDate.localeCompare(b.releaseDate);
