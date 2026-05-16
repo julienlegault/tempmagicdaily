@@ -603,7 +603,7 @@ function renderSetTimeline() {
   setTimeline.classList.remove("hidden");
 }
 
-function getTimelineHintDirectionClass(setCode: string): "timeline-set-hint-left" | "timeline-set-hint-right" | null {
+function getTimelineHintDirection(setCode: string): "timeline-set-hint-left" | "timeline-set-hint-right" | null {
   const guessedIndex = timelineSetIndexByCode.get(setCode);
   if (guessedIndex === undefined || correctSetCodes.has(setCode)) {
     return null;
@@ -616,9 +616,6 @@ function getTimelineHintDirectionClass(setCode: string): "timeline-set-hint-left
       continue;
     }
     const delta = correctIndex - guessedIndex;
-    if (delta === 0) {
-      return null;
-    }
     if (nearestDelta === null || Math.abs(delta) < Math.abs(nearestDelta)) {
       nearestDelta = delta;
     }
@@ -646,7 +643,7 @@ function updateSetTimelineItem(setCode: string, isCorrect: boolean) {
   item.classList.remove("timeline-set-hint-left", "timeline-set-hint-right");
 
   if (!isCorrect) {
-    const directionClass = getTimelineHintDirectionClass(setCode);
+    const directionClass = getTimelineHintDirection(setCode);
     if (directionClass) {
       item.classList.add(directionClass);
     }
