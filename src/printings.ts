@@ -459,6 +459,17 @@ function createSetIcon(iconSvgUri: string | null): HTMLImageElement | null {
   return img;
 }
 
+function getSetSymbolLabel(set: SetInfo): string {
+  if (set.releaseYear === null) {
+    return set.name;
+  }
+  const yearText = String(set.releaseYear);
+  if (set.name.includes(yearText)) {
+    return set.name;
+  }
+  return `${set.name} (${yearText})`;
+}
+
 function renderSetTimeline() {
   setTimeline.replaceChildren();
 
@@ -472,19 +483,20 @@ function renderSetTimeline() {
     const item = document.createElement("div");
     item.className = "timeline-set-item";
     item.dataset.setCode = set.code;
-    item.title = set.name;
+    const symbolLabel = getSetSymbolLabel(set);
+    item.title = symbolLabel;
 
     if (set.iconSvgUri) {
       const img = document.createElement("img");
       img.src = set.iconSvgUri;
-      img.alt = set.name;
+      img.alt = symbolLabel;
       img.className = "timeline-set-icon";
       item.appendChild(img);
     } else {
-      const label = document.createElement("span");
-      label.className = "timeline-set-code";
-      label.textContent = set.code.toUpperCase();
-      item.appendChild(label);
+      const square = document.createElement("span");
+      square.className = "timeline-set-fallback-square";
+      square.setAttribute("aria-hidden", "true");
+      item.appendChild(square);
     }
 
     setTimeline.appendChild(item);

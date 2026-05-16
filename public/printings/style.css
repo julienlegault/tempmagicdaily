@@ -202,6 +202,13 @@ h1 {
   transition: filter 0.3s;
 }
 
+.timeline-set-fallback-square {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: #ececec;
+}
+
 .timeline-set-correct {
   background: #2ecc71;
 }
@@ -210,12 +217,20 @@ h1 {
   filter: brightness(0);
 }
 
+.timeline-set-correct .timeline-set-fallback-square {
+  background: #10161b;
+}
+
 .timeline-set-incorrect {
   background: #7d2020;
 }
 
 .timeline-set-incorrect .timeline-set-icon {
   filter: brightness(0) invert(1);
+}
+
+.timeline-set-incorrect .timeline-set-fallback-square {
+  background: #ececec;
 }
 
 .timeline-set-code {
