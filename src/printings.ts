@@ -1112,7 +1112,7 @@ function resetGameState() {
   lastSetQuery = "";
   lastSetResults = [];
   shareRows = [];
-  timelineSetIndexByCode = new Map<string, number>();
+  timelineSetIndexByCode.clear();
   clearSetGuess();
   resultsGrid.replaceChildren();
   setTimeline.replaceChildren();
