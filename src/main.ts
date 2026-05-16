@@ -207,9 +207,14 @@ function renderState() {
   bars.forEach(bar => {
     bar.style.backgroundColor = "";
   });
+  answerBar.classList.remove("hint-up", "hint-down");
   
   const last = guesses[guesses.length - 1];
   const diff = last ? last.index - answerIndex() : 0;
+
+  if (last && diff !== 0) {
+    answerBar.classList.add(diff > 0 ? "hint-up" : "hint-down");
+  }
 
   if (diff === 0) {
     answerBar.textContent = `${last.name} (${guesses.length} guesses)`;

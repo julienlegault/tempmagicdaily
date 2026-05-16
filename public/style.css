@@ -99,6 +99,27 @@ button {
 .bar.center {
   background: #888;
   opacity: 1;
+  position: relative;
+  overflow: visible;
+}
+
+.bar.center.hint-up::after,
+.bar.center.hint-down::after {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.bar.center.hint-up::after {
+  content: "↑";
+}
+
+.bar.center.hint-down::after {
+  content: "↓";
 }
 
 .bar.correct {
