@@ -367,6 +367,7 @@ button:hover {
   border-radius: 12px;
   max-width: 600px;
   margin-inline: auto;
+  text-align: center;
 }
 
 .menu-how-to-play {
@@ -382,7 +383,6 @@ button:hover {
 .how-to-play p {
   margin: 0 0 8px;
   color: var(--text);
-  text-align: center;
 }
 
 .how-to-play ul {
@@ -390,6 +390,7 @@ button:hover {
   padding-left: 20px;
   display: grid;
   gap: 6px;
+  text-align: left;
 }
 
 .results-row {
