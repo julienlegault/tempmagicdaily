@@ -170,6 +170,7 @@ const DAILY_PLAY_STORAGE_KEY = "tempmagicdaily-printings-daily-plays";
 const DAILY_PLAY_RETENTION_DAYS = 30;
 const NORMAL_ORACLE_CLUE_GUESS_COUNT = 3;
 const HARD_MODE_ORACLE_CLUE_GUESS_COUNT = 8;
+const MINIMUM_WINNING_PRINTING_PRICE = 8;
 
 function seededRandom(seed: number) {
   return () => {
@@ -308,6 +309,14 @@ function getPracticeIndex(max: number) {
 
 function getCardIndex(max: number, mode: GameMode) {
   return mode === "daily" ? getDailyIndex(max) : getPracticeIndex(max);
+}
+
+function getCardCandidates(cards: CardListItem[], mode: GameMode): CardListItem[] {
+  if (!cards.length) {
+    return [];
+  }
+  const startIndex = getCardIndex(cards.length, mode);
+  return [...cards.slice(startIndex), ...cards.slice(0, startIndex)];
 }
 
 function normalize(value: string): string {
@@ -1212,8 +1221,99 @@ async function setupGame(mode: GameMode) {
   if (!cards.length) {
     throw new Error("Card list was empty.");
   }
+  const cardCandidates = getCardCandidates(cards, mode);
+  let selectedPrintingsBySet: Map<string, PrintingInfo[]> | null = null;
+  let highestPricePrinting: PrintingInfo | null = null;
+  let highestPriceFinish: Finish = "nonfoil";
+  let highestPrice = -1;
+  let selectedCorrectAnswerKeys = new Set<string>();
+  let selectedCorrectSetCodes = new Set<string>();
 
-  selectedCardName = cards[getCardIndex(cards.length, mode)];
+  for (const cardCandidate of cardCandidates) {
+    const printings = await fetchAllPrintings(cardCandidate);
+    if (!printings.length) {
+      continue;
+    }
+
+    const candidatePrintingsBySet = new Map<string, PrintingInfo[]>();
+    for (const printing of printings) {
+      const existing = candidatePrintingsBySet.get(printing.setCode) ?? [];
+      existing.push(printing);
+      candidatePrintingsBySet.set(printing.setCode, existing);
+    }
+
+    let candidateHighestPricePrinting: PrintingInfo | null = null;
+    let candidateHighestPriceFinish: Finish = "nonfoil";
+    let candidateHighestPrice = -1;
+    const candidateCorrectAnswerKeys = new Set<string>();
+    const candidateCorrectSetCodes = new Set<string>();
+
+    for (const printingsInSet of candidatePrintingsBySet.values()) {
+      for (const printing of printingsInSet) {
+        const nonfoilPrice = printing.prices.nonfoil;
+        if (nonfoilPrice !== null && nonfoilPrice > candidateHighestPrice) {
+          candidateHighestPrice = nonfoilPrice;
+          candidateHighestPriceFinish = "nonfoil";
+          candidateHighestPricePrinting = printing;
+          candidateCorrectAnswerKeys.clear();
+          candidateCorrectSetCodes.clear();
+          candidateCorrectAnswerKeys.add(getGuessKey(printing.setCode, "nonfoil", printing));
+          candidateCorrectSetCodes.add(printing.setCode);
+        } else if (nonfoilPrice !== null && nonfoilPrice === candidateHighestPrice) {
+          candidateCorrectAnswerKeys.add(getGuessKey(printing.setCode, "nonfoil", printing));
+          candidateCorrectSetCodes.add(printing.setCode);
+        }
+
+        const foilPrice = printing.prices.foil;
+        if (foilPrice !== null && foilPrice > candidateHighestPrice) {
+          candidateHighestPrice = foilPrice;
+          candidateHighestPriceFinish = "foil";
+          candidateHighestPricePrinting = printing;
+          candidateCorrectAnswerKeys.clear();
+          candidateCorrectSetCodes.clear();
+          candidateCorrectAnswerKeys.add(getGuessKey(printing.setCode, "foil", printing));
+          candidateCorrectSetCodes.add(printing.setCode);
+        } else if (foilPrice !== null && foilPrice === candidateHighestPrice) {
+          candidateCorrectAnswerKeys.add(getGuessKey(printing.setCode, "foil", printing));
+          candidateCorrectSetCodes.add(printing.setCode);
+        }
+      }
+    }
+
+    if (!candidateHighestPricePrinting || candidateHighestPrice < MINIMUM_WINNING_PRINTING_PRICE) {
+      continue;
+    }
+
+    selectedCardName = cardCandidate;
+    selectedPrintingsBySet = candidatePrintingsBySet;
+    highestPricePrinting = candidateHighestPricePrinting;
+    highestPriceFinish = candidateHighestPriceFinish;
+    highestPrice = candidateHighestPrice;
+    selectedCorrectAnswerKeys = candidateCorrectAnswerKeys;
+    selectedCorrectSetCodes = candidateCorrectSetCodes;
+    break;
+  }
+
+  if (!selectedCardName || !selectedPrintingsBySet || !highestPricePrinting || highestPrice < MINIMUM_WINNING_PRINTING_PRICE) {
+    throw new Error(`Could not find a card with a printing valued at $${MINIMUM_WINNING_PRINTING_PRICE} or more.`);
+  }
+
+  printingsBySet.clear();
+  for (const [setCode, setPrintings] of selectedPrintingsBySet.entries()) {
+    printingsBySet.set(setCode, setPrintings);
+  }
+
+  correctAnswerKeys.clear();
+  for (const key of selectedCorrectAnswerKeys) {
+    correctAnswerKeys.add(key);
+  }
+  correctSetCodes.clear();
+  for (const setCode of selectedCorrectSetCodes) {
+    correctSetCodes.add(setCode);
+  }
+
+  correctPrinting = highestPricePrinting;
+  correctFinish = highestPriceFinish;
 
   const cardResponse = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(selectedCardName)}`);
   if (!cardResponse.ok) {
@@ -1222,61 +1322,6 @@ async function setupGame(mode: GameMode) {
 
   selectedCard = (await cardResponse.json()) as ScryfallCard;
   renderCardFrame(selectedCard);
-
-  const printings = await fetchAllPrintings(selectedCard.name);
-  if (!printings.length) {
-    throw new Error("No printings found for today's card.");
-  }
-
-  printingsBySet.clear();
-  for (const printing of printings) {
-    const existing = printingsBySet.get(printing.setCode) ?? [];
-    existing.push(printing);
-    printingsBySet.set(printing.setCode, existing);
-  }
-
-  let highestPricePrinting: PrintingInfo | null = null;
-  let highestPriceFinish: Finish = "nonfoil";
-  let highestPrice = -1;
-  correctAnswerKeys.clear();
-  correctSetCodes.clear();
-  for (const printingsInSet of printingsBySet.values()) {
-    for (const printing of printingsInSet) {
-      const nonfoilPrice = printing.prices.nonfoil;
-      if (nonfoilPrice !== null && nonfoilPrice > highestPrice) {
-        highestPrice = nonfoilPrice;
-        highestPriceFinish = "nonfoil";
-        highestPricePrinting = printing;
-        correctAnswerKeys.clear();
-        correctSetCodes.clear();
-        correctAnswerKeys.add(getGuessKey(printing.setCode, "nonfoil", printing));
-        correctSetCodes.add(printing.setCode);
-      } else if (nonfoilPrice !== null && nonfoilPrice === highestPrice) {
-        correctAnswerKeys.add(getGuessKey(printing.setCode, "nonfoil", printing));
-        correctSetCodes.add(printing.setCode);
-      }
-
-      const foilPrice = printing.prices.foil;
-      if (foilPrice !== null && foilPrice > highestPrice) {
-        highestPrice = foilPrice;
-        highestPriceFinish = "foil";
-        highestPricePrinting = printing;
-        correctAnswerKeys.clear();
-        correctSetCodes.clear();
-        correctAnswerKeys.add(getGuessKey(printing.setCode, "foil", printing));
-        correctSetCodes.add(printing.setCode);
-      } else if (foilPrice !== null && foilPrice === highestPrice) {
-        correctAnswerKeys.add(getGuessKey(printing.setCode, "foil", printing));
-        correctSetCodes.add(printing.setCode);
-      }
-    }
-  }
-
-  correctPrinting = highestPricePrinting;
-  correctFinish = highestPriceFinish;
-  if (!correctPrinting) {
-    throw new Error("Could not determine a correct answer.");
-  }
 
   allSets = await fetchAllSets();
   if (currentHardMode) {
