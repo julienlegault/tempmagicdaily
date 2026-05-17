@@ -14,6 +14,10 @@
         <button id="startDailyMode">Play Daily</button>
         <button id="startPracticeMode">Practice</button>
       </div>
+      <label class="hard-mode-toggle" for="hardModeInput">
+        <input id="hardModeInput" type="checkbox" />
+        <span>Hard Mode</span>
+      </label>
       <section class="how-to-play menu-how-to-play" aria-label="How to play">
         <h2>How to Play</h2>
         <p>Goal: find the exact printing including foiling with the highest TCGPlayer price for the shown card.</p>
@@ -38,6 +42,11 @@
           <select id="finishGuessInput" aria-label="Select foil or non-foil">
             <option value="foil">Foil</option>
             <option value="nonfoil">Non-foil</option>
+          </select>
+          <select id="styleGuessInput" aria-label="Select printing style">
+            <option value="regular">Regular</option>
+            <option value="borderless">Borderless</option>
+            <option value="extendedart">Extended Art</option>
           </select>
           <button id="setGuessButton">Guess</button>
         </div>
