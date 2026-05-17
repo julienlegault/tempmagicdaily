@@ -182,8 +182,14 @@ function getUtcDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+// Returns the date key for the current "day", where each day resets at 1 AM EST (UTC-5 = 6 AM UTC).
+function getEstResetDateKey(): string {
+  const EST_RESET_OFFSET_MS = 6 * 60 * 60 * 1000; // 6 hours: 1 AM EST = 6 AM UTC
+  return getUtcDateKey(new Date(Date.now() - EST_RESET_OFFSET_MS));
+}
+
 function getDailyIndex(max: number) {
-  const today = getUtcDateKey(new Date());
+  const today = getEstResetDateKey();
   let seed = 0;
   for (const c of today) {
     seed += c.charCodeAt(0);
@@ -193,7 +199,7 @@ function getDailyIndex(max: number) {
 }
 
 function getTodayKey() {
-  return getUtcDateKey(new Date());
+  return getEstResetDateKey();
 }
 
 function getDailyRecordKey(dateKey: string, hardMode: boolean): string {
