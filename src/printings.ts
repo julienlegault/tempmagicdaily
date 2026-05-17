@@ -353,7 +353,6 @@ function updateStyleGuessVisibility() {
   const shouldShow = currentHardMode;
   styleGuessInput.classList.toggle("hidden", !shouldShow);
   styleGuessInput.disabled = !shouldShow;
-  styleGuessInput.setAttribute("aria-hidden", shouldShow ? "false" : "true");
 }
 
 function getStyleLabel(style: PrintingStyle): string {
