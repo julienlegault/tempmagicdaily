@@ -182,9 +182,10 @@ function getUtcDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-// Returns the date key for the current "day", where each day resets at 1 AM EST (UTC-5 = 6 AM UTC).
+// Returns the date key for the current "day", where each day resets at 1 AM EST
+// (fixed UTC-5 offset; 1 AM EST = 6 AM UTC). DST is intentionally ignored.
 function getEstResetDateKey(): string {
-  const EST_RESET_OFFSET_MS = 6 * 60 * 60 * 1000; // 6 hours: 1 AM EST = 6 AM UTC
+  const EST_RESET_OFFSET_MS = 6 * 60 * 60 * 1000; // 1 AM EST (UTC-5) = 6 AM UTC
   return getUtcDateKey(new Date(Date.now() - EST_RESET_OFFSET_MS));
 }
 
