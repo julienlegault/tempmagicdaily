@@ -1228,8 +1228,10 @@ async function setupGame(mode: GameMode) {
   let highestPrice = -1;
   let selectedCorrectAnswerKeys = new Set<string>();
   let selectedCorrectSetCodes = new Set<string>();
+  let evaluatedCandidateCount = 0;
 
   for (const cardCandidate of cardCandidates) {
+    evaluatedCandidateCount += 1;
     const printings = await fetchAllPrintings(cardCandidate);
     if (!printings.length) {
       continue;
@@ -1295,7 +1297,9 @@ async function setupGame(mode: GameMode) {
   }
 
   if (!selectedCardName || !selectedPrintingsBySet || !highestPricePrinting) {
-    throw new Error(`Could not find a card with a printing valued at $${MINIMUM_WINNING_PRINTING_PRICE} or more.`);
+    throw new Error(
+      `Could not find a card with a printing valued at $${MINIMUM_WINNING_PRINTING_PRICE} or more after checking ${evaluatedCandidateCount} cards.`,
+    );
   }
 
   printingsBySet = selectedPrintingsBySet;
