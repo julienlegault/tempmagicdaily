@@ -203,8 +203,8 @@ function getTodayKey() {
   return getEstResetDateKey();
 }
 
-function getDailyRecordKey(dateKey: string, hardMode: boolean): string {
-  return hardMode ? `${dateKey}|hard` : dateKey;
+function getDailyRecordKey(dateKey: string): string {
+  return dateKey;
 }
 
 function loadDailyPlayStore(): DailyPlayStore {
@@ -280,7 +280,13 @@ function getDailyPlayRecord(dateKey: string): DailyPlayRecord | null {
   if (Object.keys(prunedStore).length !== Object.keys(store).length) {
     persistDailyPlayStore(prunedStore);
   }
-  return prunedStore[dateKey] ?? null;
+  const record = prunedStore[dateKey] ?? prunedStore[`${dateKey}|hard`] ?? null;
+  if (record && !prunedStore[dateKey]) {
+    prunedStore[dateKey] = record;
+    delete prunedStore[`${dateKey}|hard`];
+    persistDailyPlayStore(prunedStore);
+  }
+  return record;
 }
 
 function saveDailyPlayRecord(
@@ -997,7 +1003,7 @@ function showWinModal(printing: PrintingInfo, finish: Finish) {
 
   if (currentMode === "daily") {
     saveDailyPlayRecord(
-      getDailyRecordKey(getTodayKey(), currentHardMode),
+      getDailyRecordKey(getTodayKey()),
       shareRows,
       selectedCardName,
       formatPrice(winningPrice),
@@ -1042,7 +1048,7 @@ async function showStoredDailyWinModal(record: DailyPlayRecord) {
     imageUrl = await fetchCardImageByName(record.cardName);
     if (imageUrl) {
       saveDailyPlayRecord(
-        getDailyRecordKey(getTodayKey(), storedHardMode),
+        getDailyRecordKey(getTodayKey()),
         record.shareRows,
         record.cardName,
         record.priceText ?? "",
@@ -1398,7 +1404,7 @@ versionPickerModal.addEventListener("click", event => {
 
 startDailyMode.addEventListener("click", () => {
   currentHardMode = hardModeInput.checked;
-  const savedDailyRecord = getDailyPlayRecord(getDailyRecordKey(getTodayKey(), currentHardMode));
+  const savedDailyRecord = getDailyPlayRecord(getDailyRecordKey(getTodayKey()));
   if (savedDailyRecord) {
     void showStoredDailyWinModal(savedDailyRecord);
     return;
