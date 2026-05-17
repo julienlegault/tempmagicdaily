@@ -356,6 +356,12 @@ function getSelectedStyle(): PrintingStyle {
   return style === "regular" || style === "borderless" || style === "extendedart" ? style : "regular";
 }
 
+function updateStyleGuessVisibility() {
+  const shouldShow = currentHardMode;
+  styleGuessInput.classList.toggle("hidden", !shouldShow);
+  styleGuessInput.disabled = !shouldShow;
+}
+
 function getStyleLabel(style: PrintingStyle): string {
   if (style === "borderless") return "Borderless";
   if (style === "extendedart") return "Extended Art";
@@ -1315,6 +1321,7 @@ function resetGameState() {
 
 function showLanding() {
   resetGameState();
+  updateStyleGuessVisibility();
   gameArea.classList.add("hidden");
   modeLanding.classList.remove("hidden");
 }
@@ -1323,6 +1330,7 @@ async function startGame(mode: GameMode, hardMode: boolean) {
   currentMode = mode;
   currentHardMode = hardMode;
   resetGameState();
+  updateStyleGuessVisibility();
   modeLanding.classList.add("hidden");
   gameArea.classList.remove("hidden");
   guessStatus.textContent = "Loading game data…";
