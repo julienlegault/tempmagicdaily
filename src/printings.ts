@@ -1294,14 +1294,11 @@ async function setupGame(mode: GameMode) {
     break;
   }
 
-  if (!selectedCardName || !selectedPrintingsBySet || !highestPricePrinting || highestPrice < MINIMUM_WINNING_PRINTING_PRICE) {
+  if (!selectedCardName || !selectedPrintingsBySet || !highestPricePrinting) {
     throw new Error(`Could not find a card with a printing valued at $${MINIMUM_WINNING_PRINTING_PRICE} or more.`);
   }
 
-  printingsBySet.clear();
-  for (const [setCode, setPrintings] of selectedPrintingsBySet.entries()) {
-    printingsBySet.set(setCode, setPrintings);
-  }
+  printingsBySet = selectedPrintingsBySet;
 
   correctAnswerKeys.clear();
   for (const key of selectedCorrectAnswerKeys) {
