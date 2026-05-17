@@ -280,7 +280,7 @@ function getDailyPlayRecord(dateKey: string): DailyPlayRecord | null {
   if (Object.keys(prunedStore).length !== Object.keys(store).length) {
     persistDailyPlayStore(prunedStore);
   }
-  return prunedStore[dateKey] ?? null;
+  return prunedStore[dateKey] ?? prunedStore[`${dateKey}|hard`] ?? null;
 }
 
 function saveDailyPlayRecord(
@@ -1398,7 +1398,7 @@ versionPickerModal.addEventListener("click", event => {
 
 startDailyMode.addEventListener("click", () => {
   currentHardMode = hardModeInput.checked;
-  const savedDailyRecord = getDailyPlayRecord(getDailyRecordKey(getTodayKey(), currentHardMode));
+  const savedDailyRecord = getDailyPlayRecord(getTodayKey());
   if (savedDailyRecord) {
     void showStoredDailyWinModal(savedDailyRecord);
     return;
